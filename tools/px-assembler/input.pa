@@ -1,0 +1,70 @@
+.SECTION NONE
+
+; .EXTERN putc                              ; should be able to resolve external symbols...
+; .GLOBAL main                              ; also expose external symbols...                         
+
+; Devices
+.DEF Display 0x8000
+
+; Zero page / Registers
+.DEF t 0x0010
+.DEF X 0x0012
+.DEF Y 0x0014
+.DEF P 0x0016
+.DEF S 0x0030
+
+; Constants
+.DEF CENTER_X 0x20                          ; 32
+.DEF CENTER_Y 0x20                          ; 32
+.DEF WIDTH 0x40                             ; 64
+.DEF HEIGHT 0x40                            ; 64
+                                            
+.SECTION DATA                               
+.ORG 0xFF00                                 
+                                            
+data:                                       
+  .DB 0x00, 0x00                            ; random placeholder                   
+                                  
+.SECTION CODE                     
+.ORG 0xFF20                       
+            
+_start:
+    NOP
+    NOP
+
+    MOV [t], 0                              ; t=0
+Loop:
+      MOV [Y], 0
+  LoopY:
+        MOV [X], 0
+    LoopX:
+
+        MOV [P], [Y]                        ; pixel position
+        MUL [P], 64
+        ADD [P], [X]
+        MUL [P], 3
+
+        ADD [P], Display                    
+
+        MOV [S], [t]                        ; pixel color
+
+        HALF [S]
+        HMUL [S], 1.5
+        UHALF [S]
+
+        MOV (P), [S]                        ; set pixel
+
+        INC [X]                             ; next col
+        CMP< [X], 64
+        JLT> LoopX
+
+      INC [Y]                               ; next row
+      CMP< [Y], 64
+      JLT> LoopY
+
+    INC [t]                                 ; loop from t=0..255
+    CMP< [t], 255
+    JLT> Loop
+
+    JMP _start                              ; reset
+
