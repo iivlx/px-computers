@@ -11,6 +11,9 @@
 .DEF X 0x0012
 .DEF Y 0x0014
 .DEF P 0x0016
+.DEF Dx 0x0020
+.DEF Dy 0x0022
+.DEF Dist 0x0024
 .DEF S 0x0030
 
 ; Constants
@@ -53,6 +56,18 @@ Loop:
         UHALF [S]
 
         MOV (P), [S]                        ; set pixel
+
+        ; calculate distance to pixel...
+        MOV [Dx], [X]
+        SUB [Dx], CENTER_X                  ; Dx = X - CenterX                                   
+        MOV [Dy], [Y]                      
+        SUB [Dy], CENTER_Y                  ; Dy = Y - CenterY                               
+        MULS [Dx], [Dx]                     ; Dx^2
+        MULS [Dy], [Dy]                     ; Dy^2
+                                                    
+        MOV [Dist], [Dx]                      
+        ADD [Dist], [Dy]                    
+        HSQRT [Dist]                        ; distance = sqrt(Dx^2 + Dy^2)
 
         INC [X]                             ; next col
         CMP< [X], 64

@@ -68,6 +68,7 @@
 #define BINARYOP(op) binaryOp([](uint32_t a, uint32_t b) { return a op b; })
 #define TRINARYOP(op) trinaryOp([](uint32_t a, uint32_t b, uint32_t c) { return a op b op c; })
 
+#define UNARYHOP(op) unaryOp([](uint32_t a) { return encodeHalf((op)(decodeHalf(a))); })
 #define BINARYHOP(op) binaryOp([](uint32_t a, uint32_t b) { return encodeHalf(decodeHalf(a) op decodeHalf(b)); }) // kinda unoptimizatory.
 
 #define CMPOP() cmpOp()
@@ -432,11 +433,13 @@ void PxCPU::initializeInstructionSet() {
   instructionSet[0x50] = OPCODE(UNARYOP(intToHalf(a)));                            // HALF
   instructionSet[0x51] = OPCODE(UNARYOP(halfToInt(a)));                            // UHALF
 
+  instructionSet[0x52] = OPCODE(BINARYHOP(+));                                     // HADD
+  instructionSet[0x53] = OPCODE(BINARYHOP(-));                                     // HSUB
+  instructionSet[0x54] = OPCODE(BINARYHOP(*));                                     // HMUL
+  instructionSet[0x55] = OPCODE(BINARYHOP(/ ));                                    // HDIV
 
-  instructionSet[0x52] = OPCODE(BINARYHOP(+));                                     // ADD
-  instructionSet[0x53] = OPCODE(BINARYHOP(-));                                     // SUB
-  instructionSet[0x54] = OPCODE(BINARYHOP(*));                                     // MUL
-  instructionSet[0x55] = OPCODE(BINARYHOP(/ ));                                    // DIV
+  instructionSet[0x58] = OPCODE(UNARYOP(sqrt(a)));                                 // SQRT
+  instructionSet[0x59] = OPCODE(UNARYHOP(sqrt));                                   // HSQRT
 
 
   //instructionSet[0x55] = [this]() { UNARYOP(abs(a)); };                          // ABS
@@ -459,20 +462,20 @@ void PxCPU::initializeInstructionSet() {
   //instructionSet[0x56] = [this]() { UNARYOP(a >> 1); };                          // SHRS (signed)
   //instructionSet[0x57] = [this]() { UNARYOP(a << 1); };                          // SHLS (signed)
 
-  instructionSet[0x60] = OPCODE(CMPOP());                                                     // CMP
-  //instructionSet[0x61] = [this]() { CMPOPS(); };                                            // CMP (signed)
-
-                                                                                              // JMP = JE.
-  instructionSet[0x70] = OPCODE(JMPOP(==));                                                   // JE   = JZ 
-  instructionSet[0x71] = OPCODE(JMPOP(!=));                                                   // JNE  = JNZ
-  instructionSet[0x72] = OPCODE(JMPOP(<));                                                    // JLT
-  instructionSet[0x73] = OPCODE(JMPOP(<=));                                                   // JLE
-  instructionSet[0x74] = OPCODE(JMPOP(>));                                                    // JGT
-  instructionSet[0x75] = OPCODE(JMPOP(>=));                                                   // JGE
-
-  instructionSet[0x80] = OPCODE(NOP());                                                       // PUSH
-  instructionSet[0x81] = OPCODE(NOP());                                                       // POP
-  instructionSet[0x82] = OPCODE(CALL());                                                      // CALL
-  instructionSet[0x83] = OPCODE(RET());                                                       // RET
+  instructionSet[0x60] = OPCODE(CMPOP());                                          // CMP
+  //instructionSet[0x61] = [this]() { CMPOPS(); };                                 // CMP (signed)
+                                                                                   
+                                                                                   // JMP = JE.
+  instructionSet[0x70] = OPCODE(JMPOP(==));                                        // JE   = JZ 
+  instructionSet[0x71] = OPCODE(JMPOP(!=));                                        // JNE  = JNZ
+  instructionSet[0x72] = OPCODE(JMPOP(<));                                         // JLT
+  instructionSet[0x73] = OPCODE(JMPOP(<=));                                        // JLE
+  instructionSet[0x74] = OPCODE(JMPOP(>));                                         // JGT
+  instructionSet[0x75] = OPCODE(JMPOP(>=));                                        // JGE
+                                                                                   
+  instructionSet[0x80] = OPCODE(NOP());                                            // PUSH
+  instructionSet[0x81] = OPCODE(NOP());                                            // POP
+  instructionSet[0x82] = OPCODE(CALL());                                           // CALL
+  instructionSet[0x83] = OPCODE(RET());                                            // RET
   
 }

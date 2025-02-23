@@ -306,12 +306,20 @@ class Assembler:
             return 0x01
 
         # ARITHMETIC 
-
+        
         if operation == "ADD":
             return 0x20
-            
+        if operation == "SUB":
+            return 0x21
         if operation == "MUL":
             return 0x22
+        if operation == "DIV":
+            return 0x23
+            
+        if operation == "MULS":
+            return 0x30
+        if operation == "DIVS":
+            return 0x31
             
         if operation == "INC":
             return 0x41
@@ -320,14 +328,20 @@ class Assembler:
             return 0x50
         if operation == "UHALF":
             return 0x51
+
         if operation == "HADD":
             return 0x52
         if operation == "HSUB":
             return 0x53
         if operation == "HMUL":
-            return 0x52
+            return 0x54
         if operation == "HDIV":
-            return 0x53
+            return 0x55
+            
+        if operation == "SQRT":
+            return 0x58
+        if operation == "HSQRT":
+            return 0x59
 
         # COMPARISON / JUMP
 
