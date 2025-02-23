@@ -14,6 +14,7 @@
 .DEF Dx 0x0020
 .DEF Dy 0x0022
 .DEF Dist 0x0024
+.DEF Angle 0x0026
 .DEF S 0x0030
 
 ; Constants
@@ -23,13 +24,13 @@
 .DEF HEIGHT 0x40                            ; 64
                                             
 .SECTION DATA                               
-.ORG 0xFF00                                 
+.ORG 0xFE00                                 
                                             
 data:                                       
   .DB 0x00, 0x00                            ; random placeholder                   
                                   
 .SECTION CODE                     
-.ORG 0xFF20                       
+.ORG 0xFE20                       
             
 _start:
     NOP
@@ -50,7 +51,6 @@ Loop:
         ADD [P], Display                    
 
         MOV [S], [t]                        ; pixel color
-
         HALF [S]
         HMUL [S], 1.5
         UHALF [S]
@@ -66,8 +66,44 @@ Loop:
         MULS [Dy], [Dy]                     ; Dy^2
                                                     
         MOV [Dist], [Dx]                      
-        ADD [Dist], [Dy]                    
-        HSQRT [Dist]                        ; distance = sqrt(Dx^2 + Dy^2)
+        ADD [Dist], [Dy]           
+
+        HALF [Dist]
+        SQRT [Dist]                         ; distance = sqrt(Dx^2 + Dy^2)
+
+        ;  Spiral:      
+        HALF [Dy]
+        HALF [Dx]
+        MOV [Angle], [Dy]
+        ATAN2 [Angle], [Dx]                ; arctan(y,x)
+        
+        MOV  [S], [t]
+        HALF [S]
+        HMUL [S], 0.2
+        HADD [S], [Dist]                    ; spiral = distance + t * 0.2
+                                                 
+        HSUB [S], [Angle]                  
+        SIN  [S]                            ; value = sin(Spiral - Angle)
+        
+        HMUL [S], 127
+        HADD [S], 128                       ; What are we doing here... normalizing?
+        UHALF [S]
+
+        ;
+        ; Draw:
+        ;     MOV [Color], [S]
+        ;     MOV #(P), #[Color]                         ;R
+        ;   
+        ;     MOV [Color], [S]
+        ;     DIV [Color], 2
+        ;     INC [P]
+        ;     MOV #(P), [Color]                          ;G
+        ;   
+        ;     MOV [Color], [S]
+        ;     DIV [Color], 3
+        ;     INC [P]
+        ;     MOV #(P), [Color]                          ;B
+
 
         INC [X]                             ; next col
         CMP< [X], 64

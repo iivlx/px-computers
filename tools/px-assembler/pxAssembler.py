@@ -338,10 +338,14 @@ class Assembler:
         if operation == "HDIV":
             return 0x55
             
-        if operation == "SQRT":
+        if operation == "ISQRT":
             return 0x58
-        if operation == "HSQRT":
+        if operation == "SQRT":
             return 0x59
+        if operation == "ATAN2":
+            return 0x5A
+        if operation == "SIN":
+            return 0x5B
 
         # COMPARISON / JUMP
 

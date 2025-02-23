@@ -19,14 +19,14 @@
 
 // MUL< 0x10, 0x10     // PUSH 0x100
 
-// MOV^ 0, [COLOR]     // PUSH [COLOR]
+// MOV^ 0, [COLOR]     // PUSH [COLOR] && 0xFFFF
 // 
 // ADD_ [a], [b]       // [a] += [b]
 // ADD> [a], [b]       // [a] += [b] + POP()
 // ADD<> [a], [b]      // [a] += [b] + POP() ... PUSH [a]+[b] >> 0x10
-// ADD^> [a], [b]      // [a] += [b] + POP() ... PUSH [a]+[b]
+// ADD^> [a], [b]      // [a] += [b] + POP() ... PUSH [a]+[b] && 0xFFFF
 // ADD< [a], [b]       // [a] += [b] ... PUSH [a]+[b] >> 0x10
-// ADD^ [a], [b]       // [a] += [b] ... PUSH [a]+[b]
+// ADD^ [a], [b]       // [a] += [b] ... PUSH [a]+[b] && 0xFFFF
 
 // MOV IMM16
 // MOV IMM8
@@ -41,10 +41,10 @@
 #define S_OUT   0b010    //  <.
 #define S_CHK   0b011    //  <>
 #define S_IN    0b001    //  .>
-#define S_H     0b100    //  ^..
-#define S_H_OUT 0b110    //  ^<.  
-#define S_H_CHK 0b111    //  ^<>
-#define S_H_IN  0b101    //  ^.>
+#define S_L     0b100    //  ^..
+#define S_L_OUT 0b110    //  ^<.
+#define S_L_CHK 0b111    //  ^<>
+#define S_L_IN  0b101    //  ^.>
 
 /* addressing modes */
 
@@ -57,8 +57,8 @@
 
 #define IMMEDIATE16 IMM16
 #define IMMEDIATE8 IMM8
-#define DIRECT16 DIR16 
-#define DIRECT8 DIR8 
+#define DIRECT16 DIR16
+#define DIRECT8 DIR8
 #define INDIRECT16 IND16 
 #define INDIRECT8 IND8
 
@@ -70,6 +70,9 @@
 
 #define UNARYHOP(op) unaryOp([](uint32_t a) { return encodeHalf((op)(decodeHalf(a))); })
 #define BINARYHOP(op) binaryOp([](uint32_t a, uint32_t b) { return encodeHalf(decodeHalf(a) op decodeHalf(b)); }) // kinda unoptimizatory.
+#define BINARYHFOP(op) binaryOp([](uint32_t a, uint32_t b) { return encodeHalf(op(decodeHalf(a),decodeHalf(b))); })
+
+#define BINARYFOP(op) binaryOp([](uint32_t a, uint32_t b) { return op(a,b); })
 
 #define CMPOP() cmpOp()
 #define JMPOP(op) jmpOp([](int32_t a, int32_t b) { return a op b; })
@@ -385,7 +388,7 @@ void PxCPU::ret() {
 
 void PxCPU::reset() {
   //PC = mainboard->getResetVector(); // doesn't work // really lol...// yes lol.. you should fix it..
-  PC = 0xFF10;
+  PC = 0xFE20; // ...
   SP = 0xFFFF;
   IR = 0;
   CYCLES = 0;
@@ -412,24 +415,21 @@ void PxCPU::initializeInstructionSet() {
   instructionSet[0x25] = OPCODE(BINARYOP(&));                                      // AND
   instructionSet[0x26] = OPCODE(BINARYOP(^));                                      // XOR
   instructionSet[0x27] = OPCODE(BINARYOP(|));                                      // OR
+  instructionSet[0x40] = OPCODE(UNARYOP(~a));                                      // NOT
+
+  instructionSet[0x41] = OPCODE(UNARYOP(a + 1));                                   // INC
+  instructionSet[0x42] = OPCODE(UNARYOP(a - 1));                                   // DEC
+
   instructionSet[0x28] = OPCODE(BINARYOP(<<));                                     // SHL
   instructionSet[0x29] = OPCODE(BINARYOP(>>));                                     // SHR
-                                                                                 
+
+  instructionSet[0x33] = OPCODE(BINARYOP(<<));                                     // SHL (signed arithmetic left, same as SHL)
+  instructionSet[0x34] = OPCODE(BINARYOP(>>));                                     // SAR (signed arithmetic right)
+
   instructionSet[0x30] = OPCODE(BINARYOP(*));                                      // MULS (signed)
   instructionSet[0x31] = OPCODE(BINARYOP(/ ));                                     // DIVS (signed)
   instructionSet[0x32] = OPCODE(BINARYOP(%));                                      // MODS (signed)
-  instructionSet[0x33] = OPCODE(BINARYOP(<< ));                                    // SHLS (signed)
-  instructionSet[0x34] = OPCODE(BINARYOP(>> ));                                    // SHRS (signed)
                                                                                  
-                                                                                 
-  instructionSet[0x40] = OPCODE(UNARYOP(~a));                                      // NOT
-  instructionSet[0x41] = OPCODE(UNARYOP(a+1));                                     // INC
-  instructionSet[0x42] = OPCODE(UNARYOP(a-1));                                     // DEC
-  instructionSet[0x43] = OPCODE(UNARYOP(a >> 1));                                  // SHR
-  instructionSet[0x44] = OPCODE(UNARYOP(a << 1));                                  // SHL
-
-
-
   instructionSet[0x50] = OPCODE(UNARYOP(intToHalf(a)));                            // HALF
   instructionSet[0x51] = OPCODE(UNARYOP(halfToInt(a)));                            // UHALF
 
@@ -438,32 +438,29 @@ void PxCPU::initializeInstructionSet() {
   instructionSet[0x54] = OPCODE(BINARYHOP(*));                                     // HMUL
   instructionSet[0x55] = OPCODE(BINARYHOP(/ ));                                    // HDIV
 
-  instructionSet[0x58] = OPCODE(UNARYOP(sqrt(a)));                                 // SQRT
-  instructionSet[0x59] = OPCODE(UNARYHOP(sqrt));                                   // HSQRT
+  instructionSet[0x58] = OPCODE(UNARYOP(sqrt(a)));                                 // ISQRT
+  instructionSet[0x59] = OPCODE(UNARYHOP(sqrt));                                   // SQRT
+  instructionSet[0x5A] = OPCODE(BINARYHFOP(atan2));                                // ATAN2
+  instructionSet[0x5B] = OPCODE(UNARYHOP(sin));                                    // SIN
+
+  //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // ASIN
+  //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // COS
+  //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // ACOS
+  //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // TAN
+  //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // ATAN
 
 
-  //instructionSet[0x55] = [this]() { UNARYOP(abs(a)); };                          // ABS
-  //instructionSet[0x55] = [this]() { UNARYOP(sqrt(a)); };                         // SQRT
-  //instructionSet[0x55] = [this]() { UNARYOP(sqrt(a)); };                         // SQUARE
-  //instructionSet[0x55] = [this]() { UNARYOP(); };                                // LN
-  //instructionSet[0x55] = [this]() { UNARYOP(); };                                // LOG2
-  //instructionSet[0x55] = [this]() { UNARYOP(); };                                // LOG10
-  //instructionSet[0x55] = [this]() { UNARYOP(); };                                // SIN
-  //instructionSet[0x55] = [this]() { UNARYOP(); };                                // ASIN
-  //instructionSet[0x55] = [this]() { UNARYOP(); };                                // COS
-  //instructionSet[0x55] = [this]() { UNARYOP(); };                                // ACOS
-  //instructionSet[0x55] = [this]() { UNARYOP(); };                                // TAN
-  //instructionSet[0x55] = [this]() { UNARYOP(); };                                // ATAN
-  //instructionSet[0x55] = [this]() { UNARYOP(); };                                // ATAN2
+  //instructionSet[0x55] = OPCODE(UNARYOP(abs(a)));                                // ABS
+  //instructionSet[0x55] = OPCODE(UNARYOP(sqrt(a)); );                             // SQRT
+  //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // LN
+  //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // LOG2
+  //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // LOG10
   
-  //instructionSet[0x55] = [this]() { UNARYOP(); };                                // RAND
+  //instructionSet[0x55] = OPCODE(UNARYOP());                                      // RAND
   
-  
-  //instructionSet[0x56] = [this]() { UNARYOP(a >> 1); };                          // SHRS (signed)
-  //instructionSet[0x57] = [this]() { UNARYOP(a << 1); };                          // SHLS (signed)
 
   instructionSet[0x60] = OPCODE(CMPOP());                                          // CMP
-  //instructionSet[0x61] = [this]() { CMPOPS(); };                                 // CMP (signed)
+  //instructionSet[0x61] = OPCODE(CMPOPS());                                       // CMP (signed)
                                                                                    
                                                                                    // JMP = JE.
   instructionSet[0x70] = OPCODE(JMPOP(==));                                        // JE   = JZ 
