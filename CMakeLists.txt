@@ -8,6 +8,7 @@ set(SOURCES
     src/main.cpp
     src/MainWindow.cpp
     src/MainScreen.cpp
+    src/pxAssemble.cpp
     src/pxCPU.cpp
     src/pxDisplay.cpp
     src/pxMainboard.cpp
