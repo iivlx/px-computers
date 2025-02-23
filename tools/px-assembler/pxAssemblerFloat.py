@@ -11,9 +11,9 @@ def encodeFloat(f):
     if exponent == 0xFF:  # special cases for Inf and NaN
         half_exponent = 0x1F
         half_mantissa = mantissa >> 13
-        if mantissa != 0:
+        if mantissa:
             half_mantissa |= 0x200  # set the quiet NaN bit ?
-    elif exponent > 0x70:  # overflow to Inf
+    elif exponent > 0x8E:  # overflow to Inf
         half_exponent = 0x1F
         half_mantissa = 0
     elif exponent < 0x71:  # underflow to subnormal or zero
