@@ -21,13 +21,13 @@ MainScreen::MainScreen(MainWindow* window, int width, int height)
 {
   window->screen = this;
   initializeShaderPrograms();
+  initializeShaderUniforms();
 }
 
 MainScreen::~MainScreen() {
 }
 
 void MainScreen::addDisplay(PxDisplay* pd) {
-  auto [width, height] = pd->getSize();
   initializeTexture(pd->textureID);
   initializeQuadVAO(pd->VAO);
 
@@ -45,11 +45,15 @@ void MainScreen::initializeShaderPrograms() {
 
   initializeShader(renderProgram, renderShaders);
   initializeShader(computeProgram, computeShaders);
+}
 
+void MainScreen::initializeShaderUniforms() {
+  xOffsetLoc = glGetUniformLocation(renderProgram, "xOffset");
+  yOffsetLoc = glGetUniformLocation(renderProgram, "yOffset");
+  scaleLoc = glGetUniformLocation(renderProgram, "scale");
 }
 
 void MainScreen::initializeTexture(GLuint& textureID) {
-  static GLuint level = 0;
   glGenTextures(1, &textureID);
   glBindTexture(GL_TEXTURE_2D, textureID);
 
@@ -59,7 +63,6 @@ void MainScreen::initializeTexture(GLuint& textureID) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-
 }
 
 void MainScreen::initializeQuadVAO(GLuint& quadVAO) {
@@ -98,39 +101,24 @@ void MainScreen::initializeQuadVAO(GLuint& quadVAO) {
   glBindVertexArray(0);
 }
 
-
-
+/* Render a display's buffer as a texture to the screen... */
 void MainScreen::render(PxDisplay* display, float x_offset, float y_offset) {
-  
-  //if (display->redrawRequested) {
-    glBindTexture(GL_TEXTURE_2D, display->textureID);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, display->currentBuffer->data());
-    //display->redrawRequested = false;
-  //}
 
+  // update the display's texture from its buffer data
+  glBindTexture(GL_TEXTURE_2D, display->textureID);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, display->currentBuffer->data());
+
+  // update shader with display's position
   glUseProgram(renderProgram);
-
-
-  GLint xOffsetLoc = glGetUniformLocation(renderProgram, "xOffset");
-  GLint yOffsetLoc = glGetUniformLocation(renderProgram, "yOffset");
-  GLint scaleLoc = glGetUniformLocation(renderProgram, "scale");
   glUniform1f(xOffsetLoc, display->x_offset);
   glUniform1f(yOffsetLoc, display->y_offset);
   glUniform1f(scaleLoc, display->scale);
 
-
+  // draw
   glBindVertexArray(display->VAO);
-  glActiveTexture(GL_TEXTURE);
-  glBindTexture(GL_TEXTURE_2D, display->textureID);
-
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-  glBindTexture(GL_TEXTURE_2D, 0);
   glBindVertexArray(0);
-  glUseProgram(0);
-
 }
-
 
 void MainScreen::moveToFront(PxDisplay* display) {
   auto it = std::find(displays.begin(), displays.end(), display);
@@ -140,9 +128,7 @@ void MainScreen::moveToFront(PxDisplay* display) {
   }
 }
 
-
 void MainScreen::mouseClickDown(float x, float y) {
-
   float ndcX = (x / 512.0f) * 2 - 1.0f; // some spongy looking code
   float ndcY = (1.0f - (y / 512.0f)) * 2 - 1.0f;
 
@@ -157,8 +143,6 @@ void MainScreen::mouseClickDown(float x, float y) {
     float yOffset = display->y_offset;
     float scale = display->scale;
     auto [width, height] = display->getSize();
-
-
 
     if (ndcX >= xOffset - (scale) && ndcX <= xOffset + scale
       && ndcY >= yOffset-scale && ndcY <= yOffset +scale) {
@@ -176,10 +160,8 @@ void MainScreen::mouseClickUp(float x, float y) {
   float ndcX = (x / 512.0f) * 2 - 1.0f;
   float ndcY = (1.0f - (y / 512.0f)) * 2 - 1.0f;
 
-
   if (dragging) {
     dragging = false;
-    //std::cout << "Drag stop\n";
   }
 }
 
@@ -190,7 +172,6 @@ void MainScreen::mouseMove(float x, float y) {
   if (dragging) {
     auto display = static_cast<PxDisplay*>(clicked);
 
-
     float dx = (drag_x - ndcX);
     float dy = (drag_y - ndcY);
 
@@ -200,13 +181,11 @@ void MainScreen::mouseMove(float x, float y) {
     display->x_offset -= dx; // opposite direction of mouse drag
     display->y_offset -= dy;
 
-
     //std::cout << "Move: " << display->textureID << " : " << display->x_offset << ", " << display->y_offset << std::endl;
   }
 }
 
 void MainScreen::mouseClickDownPxDisplay(PxDisplay* display, float x, float y) {
-
   clicked = static_cast<PxDevice*>(display);
 
   moveToFront(display);
@@ -219,7 +198,6 @@ void MainScreen::mouseClickDownPxDisplay(PxDisplay* display, float x, float y) {
   else {
     //dragging = false; // toggle
   }
-
 }
 
 bool MainScreen::mouseOverPxDevice(float x, float y) {

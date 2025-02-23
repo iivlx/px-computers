@@ -35,9 +35,15 @@ public:
 private:
   int width, height;
   static inline int nextDisplayID = 0;
-  
+
   void initializeShaderPrograms();
+  void initializeShaderUniforms();
   void initializeQuadVAO(GLuint& VAO);
   void initializeTexture(GLuint& textureID);
+
+  // shader uniforms
+  GLint xOffsetLoc;
+  GLint yOffsetLoc;
+  GLint scaleLoc;
 
 };
