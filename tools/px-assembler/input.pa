@@ -15,6 +15,7 @@
 .DEF Dy 0x0022
 .DEF Dist 0x0024
 .DEF Angle 0x0026
+.DEF Color 0x0028
 .DEF S 0x0030
 
 ; Constants
@@ -50,14 +51,7 @@ Loop:
 
         ADD [P], Display                    
 
-        MOV [S], [t]                        ; pixel color
-        HALF [S]
-        HMUL [S], 1.5
-        UHALF [S]
-
-        MOV (P), [S]                        ; set pixel
-
-        ; calculate distance to pixel...
+        ; calculate distance to pixel
         MOV [Dx], [X]
         SUB [Dx], CENTER_X                  ; Dx = X - CenterX                                   
         MOV [Dy], [Y]                      
@@ -71,38 +65,41 @@ Loop:
         HALF [Dist]
         SQRT [Dist]                         ; distance = sqrt(Dx^2 + Dy^2)
 
-        ;  Spiral:      
+        ;  spiral
+        MOV [Dx], [X]
+        SUB [Dx], CENTER_X                  ; Dx = X - CenterX                                   
+        MOV [Dy], [Y]                      
+        SUB [Dy], CENTER_Y                  ; Dy = Y - CenterY      
         HALF [Dy]
         HALF [Dx]
         MOV [Angle], [Dy]
         ATAN2 [Angle], [Dx]                ; arctan(y,x)
+        HMUL [Angle], 2.5
         
         MOV  [S], [t]
         HALF [S]
         HMUL [S], 0.2
-        HADD [S], [Dist]                    ; spiral = distance + t * 0.2
-                                                 
-        HSUB [S], [Angle]                  
-        SIN  [S]                            ; value = sin(Spiral - Angle)
+        HADD [S], [Dist]                                    
+        HSUB [S], [Angle]                   ; spiral = distance + t * 0.2 - angle
+        SIN  [S]                            ; value = sin(spiral)
         
-        HMUL [S], 127
-        HADD [S], 128                       ; What are we doing here... normalizing?
+        HMUL [S], 127.0
+        HADD [S], 128.0                     ; normalize
         UHALF [S]
+        
+        Draw:
+        MOV [Color], [S]
+        MOV (P), [Color]                    ;R
 
-        ;
-        ; Draw:
-        ;     MOV [Color], [S]
-        ;     MOV #(P), #[Color]                         ;R
-        ;   
-        ;     MOV [Color], [S]
-        ;     DIV [Color], 2
-        ;     INC [P]
-        ;     MOV #(P), [Color]                          ;G
-        ;   
-        ;     MOV [Color], [S]
-        ;     DIV [Color], 3
-        ;     INC [P]
-        ;     MOV #(P), [Color]                          ;B
+        MOV [Color], [S]
+        DIV [Color], 2
+        INC [P]
+        MOV (P), [Color]                    ;G
+        
+        ;MOV [Color], [S]
+        ;DIV [Color], 3
+        ;INC [P]
+        ;MOV (P), [Color]                   ;B
 
 
         INC [X]                             ; next col
