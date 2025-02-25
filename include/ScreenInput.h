@@ -1,15 +1,15 @@
 #pragma once
 
-#include "MainScreen.h"
+#include "Screen.h"
 
 #include "pxDevice.h"
 #include "pxDisplay.h"
 
-class MainScreen;
+class Screen;
 
 class ScreenInput {
 public:
-  ScreenInput(MainScreen* screen);
+  ScreenInput(Screen* screen);
   ~ScreenInput();
 
   void mouseClickDown(float x, float y);
@@ -18,7 +18,7 @@ public:
   void mouseClickDownPxDisplay(PxDisplay* display, float x, float y);
   bool mouseOverPxDevice(float x, float y);
 
-  MainScreen* screen;
+  Screen* screen;
 
 private:
   PxDevice* clicked;

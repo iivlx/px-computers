@@ -9,18 +9,18 @@
 
 #include "pxMainboard.h"
 
-class MainScreen;
+class Screen;
 
-class MainWindow {
+class Window {
 public:
-  MainWindow(int width, int height, const std::string& title);
-  ~MainWindow();
+  Window(int width, int height, const std::string& title);
+  ~Window();
 
-  MainScreen* screen = nullptr;
+  Screen* screen = nullptr;
 
   void tick(std::vector<PxMainboard*> mainboards);
-  void redraw(MainScreen& screen, std::vector<PxMainboard*> mainboards);
-  void run(MainScreen& screen, std::vector<PxMainboard*> mainboards);
+  void redraw(Screen& screen, std::vector<PxMainboard*> mainboards);
+  void run(Screen& screen, std::vector<PxMainboard*> mainboards);
 
   void PxCPUThread(PxMainboard* mainboard);
 

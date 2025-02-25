@@ -6,8 +6,8 @@
 
 #include "gl/GL.h"
 
-#include "MainWindow.h"
-#include "MainScreen.h"
+#include "Window.h"
+#include "Screen.h"
 
 #include "pxOpenGL.h" 
 #include "pxCPU.h"
@@ -15,7 +15,7 @@
 #include <iostream>
 
 /* Creates a Window (hWnd) and attaches an OpenGL Rendering Context (hGLRC) referenced by its device context (hDC) */
-MainWindow::MainWindow(int width, int height, const std::string& title)
+Window::Window(int width, int height, const std::string& title)
   : width(width), height(height), title(title)
   , hWnd(nullptr), hDC(nullptr), hGLRC(nullptr)
 {
@@ -25,17 +25,17 @@ MainWindow::MainWindow(int width, int height, const std::string& title)
   initializeOpenGlFunctionPointers();  // Load upgraded OpenGL function pointers (for shaders, VAOs, etc)
 }
 
-MainWindow::~MainWindow() {
+Window::~Window() {
   cleanup();
 }
 
 /* Windows and OpenGL */
 
-void MainWindow::initializeWindow() {
+void Window::initializeWindow() {
   WNDCLASS wc = {};
-  wc.lpfnWndProc = MainWindow::WindowProc;
+  wc.lpfnWndProc = Window::WindowProc;
   wc.hInstance = GetModuleHandle(nullptr);
-  wc.lpszClassName = "MainWindowClass";
+  wc.lpszClassName = "WindowClass";
 
   if (!RegisterClass(&wc)) {
     throw std::runtime_error("Failed to register window class");
@@ -45,7 +45,7 @@ void MainWindow::initializeWindow() {
   AdjustWindowRect(&clientRect, WS_OVERLAPPEDWINDOW, FALSE);
 
   hWnd = CreateWindowEx(
-    0, "MainWindowClass", title.c_str(),
+    0, "WindowClass", title.c_str(),
     WS_OVERLAPPEDWINDOW | WS_VISIBLE,
     CW_USEDEFAULT, CW_USEDEFAULT,
     clientRect.right - clientRect.left,
@@ -61,7 +61,7 @@ void MainWindow::initializeWindow() {
   hDC = GetDC(hWnd);
 }
 
-void MainWindow::initializeOpenGL() {
+void Window::initializeOpenGL() {
   PIXELFORMATDESCRIPTOR pfd = {};
   pfd.nSize = sizeof(pfd);
   pfd.nVersion = 1;
@@ -80,7 +80,7 @@ void MainWindow::initializeOpenGL() {
   }
 }
 
-void MainWindow::initializeOpenGLExtensions() {
+void Window::initializeOpenGLExtensions() {
   HGLRC tempContext = wglCreateContext(hDC);
   if (!tempContext || !wglMakeCurrent(hDC, tempContext)) {
     throw std::runtime_error("Failed to create temporary OpenGL context");
@@ -108,7 +108,7 @@ void MainWindow::initializeOpenGLExtensions() {
   wglDeleteContext(tempContext);
 }
 
-void MainWindow::cleanup() {
+void Window::cleanup() {
   if (hGLRC) {
     wglMakeCurrent(nullptr, nullptr);
     wglDeleteContext(hGLRC);
@@ -123,7 +123,7 @@ void MainWindow::cleanup() {
 
 /* Window callback and event handling */
 
-LRESULT CALLBACK MainWindow::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK Window::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
   switch (uMsg) {
   case WM_NCCREATE: {
@@ -132,7 +132,7 @@ LRESULT CALLBACK MainWindow::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
   }
   case WM_LBUTTONDOWN: {
-    auto window = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+    auto window = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
     int x = LOWORD(lParam);
     int y = HIWORD(lParam);
     window->screen->input->mouseClickDown(x, y);
@@ -143,14 +143,14 @@ LRESULT CALLBACK MainWindow::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
     return 0;
   }
   case WM_LBUTTONUP: {
-    auto window = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+    auto window = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
     int x = LOWORD(lParam);
     int y = HIWORD(lParam);
     window->screen->input->mouseClickUp(x, y);
     return 0;
   }
   case WM_MOUSEMOVE: {
-    auto window = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+    auto window = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
     int x = LOWORD(lParam);
     int y = HIWORD(lParam);
 
@@ -174,13 +174,13 @@ LRESULT CALLBACK MainWindow::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
   return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-void MainWindow::tick(std::vector<PxMainboard*> mainboards) {
+void Window::tick(std::vector<PxMainboard*> mainboards) {
   for (const auto& mainboard : mainboards) {
     mainboard->tick();
   }
 }
 
-void MainWindow::redraw(MainScreen& screen, std::vector<PxMainboard*> mainboards) {
+void Window::redraw(Screen& screen, std::vector<PxMainboard*> mainboards) {
   static float x = 0.0f;
   static float y = 0.0f;
   x += 0.0001f;
@@ -198,7 +198,7 @@ void MainWindow::redraw(MainScreen& screen, std::vector<PxMainboard*> mainboards
   SwapBuffers(hDC);
 }
 
-void MainWindow::PxCPUThread(PxMainboard* mainboard) {
+void Window::PxCPUThread(PxMainboard* mainboard) {
   while (running) {
     mainboard->tick();
   }
@@ -210,14 +210,14 @@ void MainWindow::PxCPUThread(PxMainboard* mainboard) {
   std::cout << "Cycles executed: " << cycles << " in " << runningTime << std::endl;
 }
 
-void MainWindow::run(MainScreen& screen, std::vector<PxMainboard*> mainboards) {
+void Window::run(Screen& screen, std::vector<PxMainboard*> mainboards) {
   bool multi = true;
   std::vector<std::thread> executionThreads;
   running = true;
 
   if (multi) {
     for (PxMainboard* mainboard : mainboards) {
-      std::thread mainboardThread(&MainWindow::PxCPUThread, this, mainboard);
+      std::thread mainboardThread(&Window::PxCPUThread, this, mainboard);
       executionThreads.push_back(std::move(mainboardThread));
     }
   }

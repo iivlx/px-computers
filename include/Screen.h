@@ -7,13 +7,13 @@
 
 #include "pxDisplay.h"
 
-class MainWindow;
+class Window;
 class ScreenInput;
 
-class MainScreen {
+class Screen {
 public:
-  MainScreen(MainWindow* window, int width, int height);
-  ~MainScreen();
+  Screen(Window* window, int width, int height);
+  ~Screen();
 
   void render(PxDisplay* display, float x_offset = 1.0f, float y_offset = 1.0f);
 

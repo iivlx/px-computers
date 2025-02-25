@@ -6,9 +6,9 @@ set(EXECUTABLE_NAME px-computers)
 
 set(SOURCES
     src/main.cpp
-    src/MainWindow.cpp
-    src/MainScreen.cpp
+    src/Screen.cpp
     src/ScreenInput.cpp
+    src/Window.cpp
     src/pxAssemble.cpp
     src/pxCPU.cpp
     src/pxDisplay.cpp

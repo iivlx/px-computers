@@ -2,8 +2,8 @@
 
 #include <gl/GL.h>
 
-#include "MainWindow.h"
-#include "MainScreen.h"
+#include "Window.h"
+#include "Screen.h"
 
 #include "pxCPU.h"
 #include "pxClock.h"
@@ -21,8 +21,8 @@ int main(int argc, char* argv[]) {
 #endif
 
   // Initialize display
-  MainWindow mainWindow(512, 512, "PxComputers");
-  MainScreen screen(&mainWindow, 64, 64);
+  Window mainWindow(512, 512, "PxComputers");
+  Screen screen(&mainWindow, 64, 64);
 
   // Create virtual computer
 

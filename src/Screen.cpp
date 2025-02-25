@@ -8,8 +8,8 @@
 
 #include "gl/GL.h"
 
-#include "MainWindow.h"
-#include "MainScreen.h"
+#include "Window.h"
+#include "Screen.h"
 #include "ScreenInput.h"
 
 #include "pxOpenGL.h"
@@ -17,7 +17,7 @@
 
 #include <iostream>
 
-MainScreen::MainScreen(MainWindow* window, int width, int height)
+Screen::Screen(Window* window, int width, int height)
   : width(width), height(height)
 {
   window->screen = this;
@@ -27,17 +27,17 @@ MainScreen::MainScreen(MainWindow* window, int width, int height)
   initializeShaderUniforms();
 }
 
-MainScreen::~MainScreen() {
+Screen::~Screen() {
 }
 
-void MainScreen::addDisplay(PxDisplay* pd) {
+void Screen::addDisplay(PxDisplay* pd) {
   initializeTexture(pd->textureID);
   initializeQuadVAO(pd->VAO);
 
   displays.emplace_back(pd);
 }
 
-void MainScreen::initializeShaderPrograms() {
+void Screen::initializeShaderPrograms() {
   std::unordered_map<GLenum, std::string> renderShaders = {
     { GL_VERTEX_SHADER, loadFileText("shaders/px.vert") },
     { GL_FRAGMENT_SHADER, loadFileText("shaders/px.frag") }
@@ -50,13 +50,13 @@ void MainScreen::initializeShaderPrograms() {
   initializeShader(computeProgram, computeShaders);
 }
 
-void MainScreen::initializeShaderUniforms() {
+void Screen::initializeShaderUniforms() {
   xOffsetLoc = glGetUniformLocation(renderProgram, "xOffset");
   yOffsetLoc = glGetUniformLocation(renderProgram, "yOffset");
   scaleLoc = glGetUniformLocation(renderProgram, "scale");
 }
 
-void MainScreen::initializeTexture(GLuint& textureID) {
+void Screen::initializeTexture(GLuint& textureID) {
   glGenTextures(1, &textureID);
   glBindTexture(GL_TEXTURE_2D, textureID);
 
@@ -68,7 +68,7 @@ void MainScreen::initializeTexture(GLuint& textureID) {
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 }
 
-void MainScreen::initializeQuadVAO(GLuint& quadVAO) {
+void Screen::initializeQuadVAO(GLuint& quadVAO) {
   float vertices[] = {
     // x,y - u,v
     -1.0f, -1.0f,    0.0f, 0.0f, // bl
@@ -105,7 +105,7 @@ void MainScreen::initializeQuadVAO(GLuint& quadVAO) {
 }
 
 /* Render a display's buffer as a texture to the screen... */
-void MainScreen::render(PxDisplay* display, float x_offset, float y_offset) {
+void Screen::render(PxDisplay* display, float x_offset, float y_offset) {
 
   // update the display's texture from its buffer data
   glBindTexture(GL_TEXTURE_2D, display->textureID);
@@ -123,7 +123,7 @@ void MainScreen::render(PxDisplay* display, float x_offset, float y_offset) {
   glBindVertexArray(0);
 }
 
-void MainScreen::moveToFront(PxDisplay* display) {
+void Screen::moveToFront(PxDisplay* display) {
   auto it = std::find(displays.begin(), displays.end(), display);
   if (it != displays.end()) {
     displays.erase(it);

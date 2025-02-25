@@ -11,7 +11,7 @@
 #include <iostream>
 
 
-ScreenInput::ScreenInput(MainScreen* screen)
+ScreenInput::ScreenInput(Screen* screen)
   : screen(screen), clicked(nullptr), drag_x(0.0f), drag_y(0.0f)
 {
 }
