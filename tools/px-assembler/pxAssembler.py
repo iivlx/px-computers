@@ -3,70 +3,74 @@ from collections import OrderedDict
 
 from pxAssemblerFloat import encodeFloat
 
-"""
+""" pxAssembler - Assembler for converting px assembly code into machine code.
 
-The assembler creates both a symbol table, and a section table:
+The Assembler class reads an input file and translates the directives and instructions into a binary listing,
+it then converts the binary listing into a binary output file.
 
-symbols = {
-  "name": value
-  "name2": value2
-  ...
-  "nameN": valueN
-}
+Usage:
 
-sections = {
-  "name": [address, code]
-  "name2": [address2, code2]
-  ...
-  "nameN": [addressN, codeN]
-}
-
-where:
-code = [instr, instr2, ..., instrN]
-
-
-Then the assembler performs symbol substitution, and machine code translation
-for instructions in each section, using the specified base addresses:
-
-binary_sections = {
-  "name" : [byte0, byte1, ..., byteN]
-  "name2" : [byte0, byte1, ..., byteN]
-  ...
-  "nameN" : [byte0, byte1, ..., byteN]
-}
-
-
-Or maybe we just add to the sections:
-sections = {
-  "name": [address, code, machine_code]
-  "name2": [address2, code2, machine_code2]
-  ...
-  "nameN": [addressN, codeN, machine_codeN]
-}
+    asm = Assembler()
+    asm.load_source("input.pa")
+    asm.assemble()
+    asm.write_output("output.pbin")
 
 """
-
-
-#define IMM16 0b000
-#define IMM8  0b001
-#define DIR16 0b010
-#define DIR8  0b011
-#define IND16 0b100
-#define IND8  0b101
-
 
 STACK_MODES = {"^<>":0b111, "^<":0b110, "^>":0b101, "^":0b100, "<>":0b011, "<":0b010, ">":0b001, "":0b000}
 OPERAND_MODES = {"immediate16":0b000,
-                 "direct16":0b010,
-                 "indirect16":0b100,
-                 "immediate8":0b001,
-                 "indirect8":0b101,
-                 "direct8":0b011,
+                 "immediate8" :0b001,
+                 "direct16"   :0b010,
+                 "direct8"    :0b011,
+                 "indirect16" :0b100,
+                 "indirect8"  :0b101,
                  }
 
-
 class Assembler:
+    """
+    The assembler creates both a symbol table, and a section table:
+
+    symbols = {
+      "name": value
+      "name2": value2
+      ...
+      "nameN": valueN
+    }
+
+    sections = {
+      "name": [address, code]
+      "name2": [address2, code2]
+      ...
+      "nameN": [addressN, codeN]
+    }
+
+    where:
+    code = [instr, instr2, ..., instrN]
+
+
+    Then the assembler performs symbol substitution, and machine code translation
+    for instructions in each section, using the specified base addresses:
+
+    binary_sections = {
+      "name" : [byte0, byte1, ..., byteN]
+      "name2" : [byte0, byte1, ..., byteN]
+      ...
+      "nameN" : [byte0, byte1, ..., byteN]
+    }
+
+    # Also maybe we could just add to the sections:
+    # sections = {
+    #   "name": [address, code, machine_code]
+    #   "name2": [address2, code2, machine_code2]
+    #   ...
+    #   "nameN": [addressN, codeN, machine_codeN]
+    # }
+
+    """
+
     def __init__(self):
+        self.source = None
+
         self.sections = OrderedDict()
         self.symbols = OrderedDict()
         self.binary = OrderedDict()
@@ -74,83 +78,13 @@ class Assembler:
         self.current_section = None
         self.current_address = None
 
-    def assemble(self, lines):
-        PRINT_COMMENTS = True
-    
-        self.parse_sections(lines)
+    def assemble(self):
+        self.parse_sections(self.source)
         self.assemble_binary()
-
-        #return
-
-        # symbol table
-        print("Symbol table:")
-        for symbol, value in self.symbols.items():
-          print("    ", f"{symbol} : {hex(value)}")
-          
-        # section table
-        print("\n", "Section table:", sep='')
-        for name, section in self.sections.items():
-          if section[0] is None: print("    ", f"{name}: {section[0]}")
-          else: print("    ", f"{name}: {hex(section[0])}")
-
-          for instruction in section[1]:
-
-            # label
-            if instruction[0] in self.symbols.values():
-              label = next((k for k, v in self.symbols.items() if v == instruction[0]), None)
-              print('\t', end='')
-              if PRINT_COMMENTS: print("/*", end='')
-              print(label, ":", sep='', end='')
-              if PRINT_COMMENTS: print(" */", end='')
-              print('\n', end='')
-
-            # instruction
-            if type(instruction[1]) == list:
-              print('\t', end='')
-              if PRINT_COMMENTS: print("/*", end=' ')
-              print(hex(instruction[0]), ":", sep='', end=' ')
-              if PRINT_COMMENTS: print("*/", end=' ')
-
-              # print the assembled binary
-              for byte in instruction[2]:
-                print(f"0x{byte:02X}", end=', ')
-
-              # print the assembly code
-              for i in range(6 - len(instruction[2])):
-                print('     ', end='')
-              print('\t', end='')
-              
-              if PRINT_COMMENTS: print("/*", end=' ')
-              print(instruction[1][0], sep='', end=' ')
-              print(*((instruction[1])[1:]), sep=', ', end=' ')
-              if PRINT_COMMENTS: print("*/", end='')
-              print()
-
-            # raw bytes
-            else:
-              print('\t', end='')
-              if PRINT_COMMENTS: print("/*", end=' ')
-              print(hex(instruction[0]), ": ", hex(instruction[1]), sep='', end=' ')
-              if PRINT_COMMENTS: print("*/", end='')
-              print()
-
-
-        # binary sections
-        if False:
-          print("\n", "Binary sections:", sep='')
-          for name, binary in self.binary.items():
-            address = self.sections[name][0]
-            if type(address) == int: address = hex(address)
-            print("    ", f"{name} : {address}")
-            print("\t", end='')
-            for byte in binary:
-              print(hex(byte), end=', ')
-            print()
-
-
 
     def assemble_binary(self):
         """ Assemble instructions into binary"""
+
         # assemble each section
         for section_name, section in self.sections.items():
             for instruction in section[1]:
@@ -164,7 +98,8 @@ class Assembler:
 
      
     def assemble_instruction(self, name, instruction):
-      """ Assemble specific instruction into machine code"""
+      """ Assemble a specific instruction into machine code"""
+
       # raw bytes
       if type(instruction[1]) == int:
         self.binary[name].append(instruction[1])
@@ -192,8 +127,6 @@ class Assembler:
         # stack mode
         machine_code.append(STACK_MODES[stack_mode])
 
-        
-        
         mode_byte = 0
         operand_bytes = []
         # operands
@@ -204,7 +137,6 @@ class Assembler:
             mode_byte <<= 4
             bits = OPERAND_MODES[type_]
             mode_byte += bits
-
 
             # operand bytes
             if type_ in ["immediate8", "direct8", "indirect8"]:
@@ -224,22 +156,24 @@ class Assembler:
 
 
     def tokenizeOperand(self, operand):
-        operand = operand.replace('[[', '(').replace(']]', ')')
-        operand += ' '  # force delimiter at end of string
+        """ tokenize a single operand """
+
+        operand = operand.replace('[[', '(').replace(']]', ')') # normalize notation: [[a]] -> (a)
 
         tokens = []
         current_token = ""
 
         for char in operand:
-          # end token
-          if char in "[]():! ":
-              # current token
-              if current_token: tokens.append(current_token)
-              current_token = ""
-              # delimiter token
-              if not char.isspace(): tokens.append(char)
-          # build token
-          else: current_token += char
+          if char in "[]():!":
+              if current_token:
+                  tokens.append(current_token) # add each token
+                  current_token = ""
+              tokens.append(char) # add delimiter as separate token
+          else:
+              current_token += char
+
+        if current_token:
+            tokens.append(current_token) # add last token
 
         return tokens
 
@@ -376,33 +310,31 @@ class Assembler:
 
         for line in lines:
             line = line.strip()
+            if not line: continue # skip empty lines
 
-            # empty lines
-            if not line: continue
-
-            # switch section
-            elif line.startswith(".SECTION"):
+            if line.startswith(".SECTION"):
+                # create a new section  
                 section_name = line.split()[1].upper()
-                if section_name not in self.sections:
-                    # enter new section  
-                    self.current_section = section_name
-                    self.current_address = None
-                    self.sections[section_name] = [None, []]
-                    self.binary[section_name] = []
-                else:
+                if section_name in self.sections:
                     raise ValueError(f"Section name already exists: {section_name}")
 
-            # in a section
+                self.current_section = section_name
+                self.current_address = None
+                self.sections[section_name] = [None, []]
+                self.binary[section_name] = []
+
             elif self.current_section:
-                # parse line
-                parsed_line = self.parse_line(line, self.current_address) # []
+                # parse a line in current section
+                parsed_line = self.parse_line(line, self.current_address)
                 if parsed_line:
                   self.sections[self.current_section].append(parsed_line)
 
-        return
+            else:
+                # not in a section
+                raise ValueError(f"Instruction found outside of section: (line)")
 
     def tokenize_line(self, line):
-        # remove comments
+        """ removes any comments or commas, since both are just for readability """
         line = line.split(";")[0].strip()
         line = line.replace(",", " ")
         tokens = line.split()
@@ -410,15 +342,13 @@ class Assembler:
 
     def parse_line(self, line, address):
         """ Parse a line into a symbol or a section instruction"""
-        # == Preprocess == #
 
-        # skip empty lines and comments
+        # skip empty lines and comments and tokenize
         if not line or line.startswith(";"): return
-
-        # break line into tokens
         tokens = self.tokenize_line(line)
 
-        # check for labels first
+        # labels
+
         if tokens[0].endswith(":"):
             self.add_label(tokens[0], address)
             tokens = tokens[1:]
@@ -455,6 +385,13 @@ class Assembler:
               self.current_address += 2
 
         elif tokens[0] == ".DH": pass # half precision IEEE 754-2008
+            #for number in tokens[1:]:
+              # word = encodeFloat(number)
+              # byte_high = int(word, 16) >> 8
+              # byte_low = int(word, 16) & 0xFF
+              # self.sections[self.current_section][1].append([self.current_address, byte_high])
+              # self.sections[self.current_section][1].append([self.current_address+1, byte_low])
+              # self.current_address += 2
 
          # instructions
 
@@ -462,20 +399,111 @@ class Assembler:
             operands = tokens[1:]
             self.sections[self.current_section][1].append([self.current_address, tokens])
             self.current_address += 3 + 2*len(operands) # 1 byte instr + 2 bytes per operand
-        
 
     def add_label(self, label, address):
         """Add a label to the symbol table"""
         if not address: raise ValueError(f"No address set in section {self.current_section}")
         self.symbols[label.replace(":","")] = address
+        
+    def print_tables(self):
+        PRINT_COMMENTS = True
+
+        # symbol table
+        print("Symbol table:")
+        for symbol, value in self.symbols.items():
+          print("    ", f"{symbol} : {hex(value)}")
+          
+        # section table
+        print("\n", "Section table:", sep='')
+        for name, section in self.sections.items():
+          if section[0] is None: print("    ", f"{name}: {section[0]}")
+          else: print("    ", f"{name}: {hex(section[0])}")
+
+          for instruction in section[1]:
+
+            # label
+            if instruction[0] in self.symbols.values():
+              label = next((k for k, v in self.symbols.items() if v == instruction[0]), None)
+              print('\t', end='')
+              if PRINT_COMMENTS: print("/*", end='')
+              print(label, ":", sep='', end='')
+              if PRINT_COMMENTS: print(" */", end='')
+              print('\n', end='')
+
+            # instruction
+            if type(instruction[1]) == list:
+
+              # print the memory address
+              print('\t', end='')
+              if PRINT_COMMENTS: print("/*", end=' ')
+              print(hex(instruction[0]), ":", sep='', end=' ')
+              if PRINT_COMMENTS: print("*/", end=' ')
+
+              # print the machine code
+              for byte in instruction[2]:
+                print(f"0x{byte:02X}", end=', ')
+
+              # print the assembly code
+              for i in range(7 - len(instruction[2])):
+                print('\t', end='')
+              print('\t', end='')
+              
+              if PRINT_COMMENTS: print("/*", end=' ')
+              print(instruction[1][0], sep='', end=' ')
+              print(*((instruction[1])[1:]), sep=', ', end=' ')
+              if PRINT_COMMENTS: print("*/", end='')
+              print()
+
+            # raw bytes
+            else:
+              print('\t', end='')
+              if PRINT_COMMENTS: print("/*", end=' ')
+              print(hex(instruction[0]), ": ", hex(instruction[1]), sep='', end=' ')
+              if PRINT_COMMENTS: print("*/", end='')
+              print()
+
+
+        # binary sections
+        if False:
+          print("\n", "Binary sections:", sep='')
+          for name, binary in self.binary.items():
+            address = self.sections[name][0]
+            if type(address) == int: address = hex(address)
+            print("    ", f"{name} : {address}")
+            print("\t", end='')
+            for byte in binary:
+              print(hex(byte), end=', ')
+            print()
+
+    def load_source(self, filename):
+        """ load assembly source code from an input file """
+        with open(filename, "r") as assembly_file:
+            self.source = assembly_file.readlines()
+
+    def write_output(self, filename):
+        """ write the machine code to an output file """
+        with open(filename, "wb") as binary_file:
+            last_address = None
+
+            for name, binary in self.binary.items():
+
+                address = self.sections[name][0]
+                if type(address) != int: continue
+
+                if last_address is not None and address > last_address:
+                    binary_file.write(bytes([0] * (address - last_address)))
+
+                for byte in binary:
+                    binary_file.write(bytes([byte]))
+
+                last_address = address + len(binary)
+
 
 if __name__=="__main__":
 
-  with open("input.pa", "r") as assembly_file:
-    asm = Assembler()
-    assembly = assembly_file.readlines()
-    binary = asm.assemble(assembly)
+  asm = Assembler()
+  asm.load_source("input.pa")
+  asm.assemble()
 
-  with open("output.pbin", "w") as binary_file:
-    #binary_file.write(binary)
-    pass
+  asm.print_tables()
+  asm.write_output("output.pbin")
