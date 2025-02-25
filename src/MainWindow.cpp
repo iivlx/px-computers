@@ -135,7 +135,7 @@ LRESULT CALLBACK MainWindow::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
     auto window = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
     int x = LOWORD(lParam);
     int y = HIWORD(lParam);
-    window->screen->mouseClickDown(x, y);
+    window->screen->input->mouseClickDown(x, y);
     return 0;
   }
   case WM_RBUTTONDOWN: {
@@ -146,7 +146,7 @@ LRESULT CALLBACK MainWindow::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
     auto window = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
     int x = LOWORD(lParam);
     int y = HIWORD(lParam);
-    window->screen->mouseClickUp(x, y);
+    window->screen->input->mouseClickUp(x, y);
     return 0;
   }
   case WM_MOUSEMOVE: {
@@ -154,14 +154,14 @@ LRESULT CALLBACK MainWindow::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
     int x = LOWORD(lParam);
     int y = HIWORD(lParam);
 
-    if (window->screen->mouseOverPxDevice(x, y)) {
+    if (window->screen->input->mouseOverPxDevice(x, y)) {
       SetCursor(LoadCursor(nullptr, IDC_HAND));
     }
     else {
       SetCursor(LoadCursor(nullptr, IDC_ARROW));
     }
 
-    window->screen->mouseMove(x, y);
+    window->screen->input->mouseMove(x, y);
 
     return 0;
   }

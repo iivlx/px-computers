@@ -3,7 +3,12 @@
 #include <string>
 #include <unordered_map>
 
+#include "ScreenInput.h"
+
 #include "pxDisplay.h"
+
+class MainWindow;
+class ScreenInput;
 
 class MainScreen {
 public:
@@ -11,26 +16,17 @@ public:
   ~MainScreen();
 
   void render(PxDisplay* display, float x_offset = 1.0f, float y_offset = 1.0f);
-  void mouseClickDown(float x, float y);
-  void mouseClickUp(float x, float y);
-  void mouseMove(float x, float y);
-  void mouseClickDownPxDisplay(PxDisplay* display, float x, float y);
-  bool mouseOverPxDevice(float x, float y);
 
   void addDisplay(PxDisplay* display);
   void moveToFront(PxDisplay* display);
+
+  ScreenInput* input;
 
   GLuint renderProgram;
   GLuint computeProgram;
 
   std::vector<PxDisplay*> displays;
   //std::unordered_map<PxDisplay*, std::pair<GLuint, GLuint>> displays; // textures, vaos
-
-
-  PxDevice* clicked;
-  bool dragging = false;
-  float drag_x;
-  float drag_y;
 
 private:
   int width, height;

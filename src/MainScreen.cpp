@@ -10,6 +10,7 @@
 
 #include "MainWindow.h"
 #include "MainScreen.h"
+#include "ScreenInput.h"
 
 #include "pxOpenGL.h"
 #include "pxOpenGLUtil.h"
@@ -20,6 +21,8 @@ MainScreen::MainScreen(MainWindow* window, int width, int height)
   : width(width), height(height)
 {
   window->screen = this;
+  input = new ScreenInput(this);
+
   initializeShaderPrograms();
   initializeShaderUniforms();
 }
@@ -126,98 +129,4 @@ void MainScreen::moveToFront(PxDisplay* display) {
     displays.erase(it);
     displays.emplace_back(display);
   }
-}
-
-void MainScreen::mouseClickDown(float x, float y) {
-  float ndcX = (x / 512.0f) * 2 - 1.0f; // some spongy looking code
-  float ndcY = (1.0f - (y / 512.0f)) * 2 - 1.0f;
-
-  std::cout << "Coords: " << ndcX << ", " << ndcY << std::endl;
-
-  // some horrible factoring here...
-  for (auto it = displays.rbegin(); it != displays.rend(); ++it) {
-
-    auto display = *it;
-
-    float xOffset = display->x_offset;
-    float yOffset = display->y_offset;
-    float scale = display->scale;
-    auto [width, height] = display->getSize();
-
-    if (ndcX >= xOffset - (scale) && ndcX <= xOffset + scale
-      && ndcY >= yOffset-scale && ndcY <= yOffset +scale) {
-
-      //std::cout << "Hit: " << display->textureID << " : " << ndcX << ", " << ndcY << std::endl;
-
-      mouseClickDownPxDisplay(display, ndcX, ndcY);
-
-      return;
-    }
-  }
-}
-
-void MainScreen::mouseClickUp(float x, float y) {
-  float ndcX = (x / 512.0f) * 2 - 1.0f;
-  float ndcY = (1.0f - (y / 512.0f)) * 2 - 1.0f;
-
-  if (dragging) {
-    dragging = false;
-  }
-}
-
-void MainScreen::mouseMove(float x, float y) {
-  float ndcX = (x / 512.0f)*2 - 1.0f; // normal coords
-  float ndcY = (1.0f - (y / 512.0f))*2 - 1.0f;
-
-  if (dragging) {
-    auto display = static_cast<PxDisplay*>(clicked);
-
-    float dx = (drag_x - ndcX);
-    float dy = (drag_y - ndcY);
-
-    drag_x = ndcX;
-    drag_y = ndcY;
-
-    display->x_offset -= dx; // opposite direction of mouse drag
-    display->y_offset -= dy;
-
-    //std::cout << "Move: " << display->textureID << " : " << display->x_offset << ", " << display->y_offset << std::endl;
-  }
-}
-
-void MainScreen::mouseClickDownPxDisplay(PxDisplay* display, float x, float y) {
-  clicked = static_cast<PxDevice*>(display);
-
-  moveToFront(display);
-
-  if (!dragging) {
-    dragging = true;
-    drag_x = x;
-    drag_y = y;
-  }
-  else {
-    //dragging = false; // toggle
-  }
-}
-
-bool MainScreen::mouseOverPxDevice(float x, float y) {
-  float ndcX = (x / 512.0f) * 2 - 1.0f; // some spongy looking code
-  float ndcY = (1.0f - (y / 512.0f)) * 2 - 1.0f;
-
-  // some horrible factoring here...
-  for (auto it = displays.rbegin(); it != displays.rend(); ++it) {
-
-    auto display = *it;
-
-    float xOffset = display->x_offset;
-    float yOffset = display->y_offset;
-    float scale = display->scale;
-    auto [width, height] = display->getSize();
-
-    if (ndcX >= xOffset - (scale) && ndcX <= xOffset + scale
-      && ndcY >= yOffset - scale && ndcY <= yOffset + scale) {
-      return true;
-    }
-  }
-  return false;
 }
