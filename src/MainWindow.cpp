@@ -14,19 +14,22 @@
 
 #include <iostream>
 
-/* */
+/* Creates a Window (hWnd) and attaches an OpenGL Rendering Context (hGLRC) referenced by its device context (hDC) */
 MainWindow::MainWindow(int width, int height, const std::string& title)
   : width(width), height(height), title(title)
   , hWnd(nullptr), hDC(nullptr), hGLRC(nullptr)
 {
-  initializeWindow();
-  initializeOpenGL();
-  initalizeOpenGlFunctionPointers();
+  initializeWindow();                  // Create the Window (hWnd) and get its device context (hDc)
+  initializeOpenGL();                  // Create a temporary OpenGL 1.1 context (hGLRC) to load extensions
+  initializeOpenGLExtensions();        // Create a new OpenGL 4.3 context to replace the old one
+  initializeOpenGlFunctionPointers();  // Load upgraded OpenGL function pointers (for shaders, VAOs, etc)
 }
 
 MainWindow::~MainWindow() {
   cleanup();
 }
+
+/* Windows and OpenGL */
 
 void MainWindow::initializeWindow() {
   WNDCLASS wc = {};
@@ -75,8 +78,6 @@ void MainWindow::initializeOpenGL() {
   if (!hGLRC || !wglMakeCurrent(hDC, hGLRC)) {
     throw std::runtime_error("Failed to create or activate OpenGL context");
   }
-
-  initializeOpenGLExtensions();
 }
 
 void MainWindow::initializeOpenGLExtensions() {
@@ -118,6 +119,59 @@ void MainWindow::cleanup() {
   if (hWnd) {
     DestroyWindow(hWnd);
   }
+}
+
+/* Window callback and event handling */
+
+LRESULT CALLBACK MainWindow::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+
+  switch (uMsg) {
+  case WM_NCCREATE: {
+    auto createStruct = reinterpret_cast<CREATESTRUCT*>(lParam);
+    SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(createStruct->lpCreateParams)); // store 'this' ptr
+    return DefWindowProc(hWnd, uMsg, wParam, lParam);
+  }
+  case WM_LBUTTONDOWN: {
+    auto window = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+    int x = LOWORD(lParam);
+    int y = HIWORD(lParam);
+    window->screen->mouseClickDown(x, y);
+    return 0;
+  }
+  case WM_RBUTTONDOWN: {
+    ; // randomly capture right clicks
+    return 0;
+  }
+  case WM_LBUTTONUP: {
+    auto window = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+    int x = LOWORD(lParam);
+    int y = HIWORD(lParam);
+    window->screen->mouseClickUp(x, y);
+    return 0;
+  }
+  case WM_MOUSEMOVE: {
+    auto window = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+    int x = LOWORD(lParam);
+    int y = HIWORD(lParam);
+
+    if (window->screen->mouseOverPxDevice(x, y)) {
+      SetCursor(LoadCursor(nullptr, IDC_HAND));
+    }
+    else {
+      SetCursor(LoadCursor(nullptr, IDC_ARROW));
+    }
+
+    window->screen->mouseMove(x, y);
+
+    return 0;
+  }
+  case WM_CLOSE: {
+    PostQuitMessage(0);
+    return 0;
+  }
+  }
+
+  return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
 void MainWindow::tick(std::vector<PxMainboard*> mainboards) {
@@ -192,54 +246,4 @@ void MainWindow::run(MainScreen& screen, std::vector<PxMainboard*> mainboards) {
     }
   }
   executionThreads.clear();
-}
-
-LRESULT CALLBACK MainWindow::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-
-  switch (uMsg) {
-    case WM_NCCREATE: {
-      auto createStruct = reinterpret_cast<CREATESTRUCT*>(lParam);
-      SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(createStruct->lpCreateParams)); // store 'this' ptr
-      return DefWindowProc(hWnd, uMsg, wParam, lParam);
-    }
-    case WM_LBUTTONDOWN: {
-      auto window = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-      int x = LOWORD(lParam);
-      int y = HIWORD(lParam);
-      window->screen->mouseClickDown(x, y);
-      return 0;
-    }
-    case WM_RBUTTONDOWN: {
-      ; // randomly capture right clicks
-      return 0;
-    }
-    case WM_LBUTTONUP: {
-      auto window = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-      int x = LOWORD(lParam);
-      int y = HIWORD(lParam);
-      window->screen->mouseClickUp(x, y);
-      return 0;
-    }
-    case WM_MOUSEMOVE: {
-      auto window = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-      int x = LOWORD(lParam);
-      int y = HIWORD(lParam);
-
-      if (window->screen->mouseOverPxDevice(x, y)) {
-        SetCursor(LoadCursor(nullptr, IDC_HAND));
-      } else {
-        SetCursor(LoadCursor(nullptr, IDC_ARROW));
-      }
-
-      window->screen->mouseMove(x, y);
-
-      return 0;
-    }
-    case WM_CLOSE: {
-      PostQuitMessage(0);
-      return 0;
-    }
-  }
-
-  return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }

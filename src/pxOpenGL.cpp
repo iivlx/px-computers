@@ -28,7 +28,7 @@ extern PFNGLUNIFORM1IPROC glUniform1i = nullptr;
 extern PFNGLUNIFORM1FPROC glUniform1f = nullptr;
 extern PFNGLUNIFORM2FPROC glUniform2f = nullptr;
 
-void initalizeOpenGlFunctionPointers() {
+void initializeOpenGlFunctionPointers() {
   glActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress("glActiveTexture");
 
   glCreateShader = (PFNGLCREATESHADERPROC)wglGetProcAddress("glCreateShader");

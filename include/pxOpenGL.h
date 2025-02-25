@@ -39,7 +39,7 @@
 
   #define GL_TEXTURE0                       0x84C0
 
-  void initalizeOpenGlFunctionPointers();
+  void initializeOpenGlFunctionPointers();
 
   typedef void (APIENTRY* PFNGLACTIVETEXTUREPROC)(GLenum texture);
   typedef GLuint(APIENTRY* PFNGLCREATESHADERPROC)(GLenum type);
