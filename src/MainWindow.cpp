@@ -14,38 +14,14 @@
 
 #include <iostream>
 
-extern PFNGLACTIVETEXTUREPROC glActiveTexture = nullptr;
-extern PFNGLCREATESHADERPROC glCreateShader = nullptr;
-extern PFNGLSHADERSOURCEPROC glShaderSource = nullptr;
-extern PFNGLCOMPILESHADERPROC glCompileShader = nullptr;
-extern PFNGLGETSHADERIVPROC glGetShaderiv = nullptr;
-extern PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog = nullptr;
-extern PFNGLDELETESHADERPROC glDeleteShader = nullptr;
-extern PFNGLCREATEPROGRAMPROC glCreateProgram = nullptr;
-extern PFNGLATTACHSHADERPROC glAttachShader = nullptr;
-extern PFNGLLINKPROGRAMPROC glLinkProgram = nullptr;
-extern PFNGLUSEPROGRAMPROC glUseProgram = nullptr;
-extern PFNGLGETPROGRAMIVPROC glGetProgramiv = nullptr;
-extern PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog = nullptr;
-extern PFNGLGENVERTEXARRAYSPROC glGenVertexArrays = nullptr;
-extern PFNGLBINDVERTEXARRAYPROC glBindVertexArray = nullptr;
-extern PFNGLGENBUFFERSPROC glGenBuffers = nullptr;
-extern PFNGLBINDBUFFERPROC glBindBuffer = nullptr;
-extern PFNGLBUFFERDATAPROC glBufferData = nullptr;
-extern PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer = nullptr;
-extern PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
-extern PFNGLBINDIMAGETEXTUREPROC glBindImageTexture = nullptr;
-extern PFNGLDISPATCHCOMPUTEPROC glDispatchCompute = nullptr;
-extern PFNGLMEMORYBARRIERPROC glMemoryBarrier = nullptr;
-extern PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation = nullptr;
-extern PFNGLUNIFORM1IPROC glUniform1i = nullptr;
-extern PFNGLUNIFORM1FPROC glUniform1f = nullptr;
-extern PFNGLUNIFORM2FPROC glUniform2f = nullptr;
-
+/* */
 MainWindow::MainWindow(int width, int height, const std::string& title)
-  : width(width), height(height), title(title), hWnd(nullptr), hDC(nullptr), hGLRC(nullptr) {
+  : width(width), height(height), title(title)
+  , hWnd(nullptr), hDC(nullptr), hGLRC(nullptr)
+{
   initializeWindow();
   initializeOpenGL();
+  initalizeOpenGlFunctionPointers();
 }
 
 MainWindow::~MainWindow() {
@@ -129,49 +105,7 @@ void MainWindow::initializeOpenGLExtensions() {
   }
 
   wglDeleteContext(tempContext);
-
-  initalizeOpenGlFunctionPointers();
 }
-
-
-void MainWindow::initalizeOpenGlFunctionPointers() {
-  glActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress("glActiveTexture");
-
-  glCreateShader = (PFNGLCREATESHADERPROC)wglGetProcAddress("glCreateShader");
-  glShaderSource = (PFNGLSHADERSOURCEPROC)wglGetProcAddress("glShaderSource");
-  glCompileShader = (PFNGLCOMPILESHADERPROC)wglGetProcAddress("glCompileShader");
-  glGetShaderiv = (PFNGLGETSHADERIVPROC)wglGetProcAddress("glGetShaderiv");
-  glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)wglGetProcAddress("glGetShaderInfoLog");
-  glDeleteShader = (PFNGLDELETESHADERPROC)wglGetProcAddress("glDeleteShader");
-
-  glCreateProgram = (PFNGLCREATEPROGRAMPROC)wglGetProcAddress("glCreateProgram");
-  glAttachShader = (PFNGLATTACHSHADERPROC)wglGetProcAddress("glAttachShader");
-  glLinkProgram = (PFNGLLINKPROGRAMPROC)wglGetProcAddress("glLinkProgram");
-  glUseProgram = (PFNGLUSEPROGRAMPROC)wglGetProcAddress("glUseProgram");
-  glGetProgramiv = (PFNGLGETPROGRAMIVPROC)wglGetProcAddress("glGetProgramiv");
-  glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)wglGetProcAddress("glGetProgramInfoLog");
-
-  glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)wglGetProcAddress("glGenVertexArrays");
-  glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)wglGetProcAddress("glBindVertexArray");
-
-  glGenBuffers = (PFNGLGENBUFFERSPROC)wglGetProcAddress("glGenBuffers");
-  glBindBuffer = (PFNGLBINDBUFFERPROC)wglGetProcAddress("glBindBuffer");
-  glBufferData = (PFNGLBUFFERDATAPROC)wglGetProcAddress("glBufferData");
-  glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)wglGetProcAddress("glVertexAttribPointer");
-  glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glEnableVertexAttribArray");
-
-  glBindImageTexture = (PFNGLBINDIMAGETEXTUREPROC)wglGetProcAddress("glBindImageTexture");
-  glDispatchCompute = (PFNGLDISPATCHCOMPUTEPROC)wglGetProcAddress("glDispatchCompute");
-  glMemoryBarrier = (PFNGLMEMORYBARRIERPROC)wglGetProcAddress("glMemoryBarrier");
-
-  glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)wglGetProcAddress("glGetUniformLocation");
-  glUniform1i = (PFNGLUNIFORM1IPROC)wglGetProcAddress("glUniform1i");
-  glUniform1f = (PFNGLUNIFORM1FPROC)wglGetProcAddress("glUniform1f");
-  glUniform2f = (PFNGLUNIFORM2FPROC)wglGetProcAddress("glUniform2f");
-
-
-}
-
 
 void MainWindow::cleanup() {
   if (hGLRC) {
@@ -210,18 +144,6 @@ void MainWindow::redraw(MainScreen& screen, std::vector<PxMainboard*> mainboards
   SwapBuffers(hDC);
 }
 
-void MainWindow::mouseClickDown(int x, int y) {
-  screen->mouseClickDown(x, y);
-}
-
-void MainWindow::mouseClickUp(int x, int y) {
-  screen->mouseClickUp(x, y);
-}
-
-void MainWindow::mouseMove(int x, int y) {
-  screen->mouseMove(x, y);
-}
-
 void MainWindow::PxCPUThread(PxMainboard* mainboard) {
   while (running) {
     mainboard->tick();
@@ -233,8 +155,6 @@ void MainWindow::PxCPUThread(PxMainboard* mainboard) {
 
   std::cout << "Cycles executed: " << cycles << " in " << runningTime << std::endl;
 }
-
-
 
 void MainWindow::run(MainScreen& screen, std::vector<PxMainboard*> mainboards) {
   bool multi = true;
@@ -286,7 +206,7 @@ LRESULT CALLBACK MainWindow::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
       auto window = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
       int x = LOWORD(lParam);
       int y = HIWORD(lParam);
-      window->mouseClickDown(x, y);
+      window->screen->mouseClickDown(x, y);
       return 0;
     }
     case WM_RBUTTONDOWN: {
@@ -297,7 +217,7 @@ LRESULT CALLBACK MainWindow::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
       auto window = reinterpret_cast<MainWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
       int x = LOWORD(lParam);
       int y = HIWORD(lParam);
-      window->mouseClickUp(x, y);
+      window->screen->mouseClickUp(x, y);
       return 0;
     }
     case WM_MOUSEMOVE: {
@@ -311,12 +231,10 @@ LRESULT CALLBACK MainWindow::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
         SetCursor(LoadCursor(nullptr, IDC_ARROW));
       }
 
-      window->mouseMove(x, y);
+      window->screen->mouseMove(x, y);
 
       return 0;
     }
-
-
     case WM_CLOSE: {
       PostQuitMessage(0);
       return 0;

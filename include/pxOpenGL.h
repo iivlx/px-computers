@@ -14,7 +14,8 @@
   #define GLsizeiptr ptrdiff_t
 #endif
 
-#ifndef PIXEL_OPENGL
+#ifndef PX_OPENGL
+#define PX_OPENGL
 
   #define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
   #define WGL_CONTEXT_MINOR_VERSION_ARB 0x2092
@@ -37,6 +38,8 @@
   #define GL_COMPILE_STATUS 0x8B81
 
   #define GL_TEXTURE0                       0x84C0
+
+  void initalizeOpenGlFunctionPointers();
 
   typedef void (APIENTRY* PFNGLACTIVETEXTUREPROC)(GLenum texture);
   typedef GLuint(APIENTRY* PFNGLCREATESHADERPROC)(GLenum type);

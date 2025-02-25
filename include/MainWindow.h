@@ -24,10 +24,6 @@ public:
 
   void PxCPUThread(PxMainboard* mainboard);
 
-  void mouseClickDown(int x, int y);
-  void mouseClickUp(int x, int y);
-  void mouseMove(int x, int y);
-
   HDC hDC;
 private:
   int width, height;
@@ -42,7 +38,6 @@ private:
   void initializeWindow();
   void initializeOpenGL();
   void initializeOpenGLExtensions();
-  void initalizeOpenGlFunctionPointers();
   void cleanup();
 
   static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

@@ -12,6 +12,7 @@ set(SOURCES
     src/pxCPU.cpp
     src/pxDisplay.cpp
     src/pxMainboard.cpp
+    src/pxOpenGL.cpp
 )
 
 set(HEADERS
