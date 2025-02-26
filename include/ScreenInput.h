@@ -18,6 +18,8 @@ public:
   void mouseClickDownPxDisplay(PxDisplay* display, float x, float y);
   bool mouseOverPxDevice(float x, float y);
 
+  void keyDown(int keycode, bool repeat);
+
   Screen* screen;
 
 private:

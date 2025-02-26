@@ -12,6 +12,7 @@ set(SOURCES
     src/pxAssemble.cpp
     src/pxCPU.cpp
     src/pxDisplay.cpp
+    src/pxKeyboard.cpp
     src/pxMainboard.cpp
     src/pxOpenGL.cpp
 )
@@ -33,10 +34,10 @@ target_link_libraries(${EXECUTABLE_NAME} OpenGL32)
 target_include_directories(${EXECUTABLE_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 if (MSVC)
-    set_target_properties(${EXECUTABLE_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:CONSOLE")
-    add_compile_definitions(SUBSYSTEM_CONSOLE)
-    #set_target_properties(${EXECUTABLE_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
-    #add_compile_definitions(SUBSYSTEM_WINDOWS)
+    #set_target_properties(${EXECUTABLE_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:CONSOLE")
+    #add_compile_definitions(SUBSYSTEM_CONSOLE)
+    set_target_properties(${EXECUTABLE_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+    add_compile_definitions(SUBSYSTEM_WINDOWS)
 else()
     target_link_options(${EXECUTABLE_NAME} PRIVATE -mwindows)
 endif()

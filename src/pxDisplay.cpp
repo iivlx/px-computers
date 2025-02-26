@@ -14,6 +14,7 @@ PxDisplay::PxDisplay(int width, int height, bool doubleBuffering, float scale)
   , currentBuffer(&buffer1), backBuffer(doubleBuffering ? &buffer2 : nullptr)
   , redrawRequested(false), bufferSwapRequested(false)
   , scale(scale)
+  , x_offset(0.5f), y_offset(0.5f)
 {
   if (width <= 0 || height <= 0) {
     throw std::invalid_argument("Invalid size...");
@@ -63,25 +64,6 @@ void PxDisplay::clearBuffer(int r, int g, int b) {
     (*currentBuffer)[i] = static_cast<uint8_t>(0);
   }
 }
-
- // GPU Buffer
-//void PxDisplay::setPixel(int x, int y, int channel, float value) {
-//  if (x < 0 || x >= width || y < 0 || y >= height) return;
-//
-//
-//  glUseProgram(computeProgram);
-//  glBindImageTexture(0, textureID, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
-//
-//  glUniform1i(glGetUniformLocation(computeProgram, "x"), x);
-//  glUniform1i(glGetUniformLocation(computeProgram, "y"), y);
-//  glUniform1i(glGetUniformLocation(computeProgram, "channel"), channel);
-//  glUniform1f(glGetUniformLocation(computeProgram, "value"), value);
-//
-//  glDispatchCompute((width + 15) / 16, (height + 15) / 16, 1);
-//  glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-//
-//  glUseProgram(0);
-//}
 
 void PxDisplay::handleControlRegisterWrite(uint16_t address, uint8_t value) {
   controlWriteHandlers[address](value);

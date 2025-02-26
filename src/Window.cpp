@@ -165,6 +165,15 @@ LRESULT CALLBACK Window::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
     return 0;
   }
+  case WM_KEYDOWN: {
+    auto window = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+    int keycode = static_cast<int>(wParam);
+    bool repeat = (lParam & 0x40000000) != 0;
+
+    window->screen->input->keyDown(keycode, repeat);
+
+    return 0;
+  }
   case WM_CLOSE: {
     PostQuitMessage(0);
     return 0;
@@ -192,7 +201,7 @@ void Window::redraw(Screen& screen, std::vector<PxMainboard*> mainboards) {
   for (const auto mainboard : mainboards) {
     //if (mainboard->main_display->redrawRequested) {
       //mainboard->main_display->redrawRequested = false;
-      screen.render(mainboard->main_display, x, y);
+      screen.renderDisplay(mainboard->main_display, x, y);
     //}
   } 
   SwapBuffers(hDC);

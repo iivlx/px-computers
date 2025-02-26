@@ -37,14 +37,12 @@
 
 /* stack modes */
 
-#define S_NONE  0b000    //  ..
-#define S_OUT   0b010    //  <.
+#define S_NONE  0b000    //  .
+#define S_IN    0b001    //  >
+#define S_OUT   0b010    //  <
 #define S_CHK   0b011    //  <>
-#define S_IN    0b001    //  .>
-#define S_L     0b100    //  ^..
-#define S_L_OUT 0b110    //  ^<.
-#define S_L_CHK 0b111    //  ^<>
-#define S_L_IN  0b101    //  ^.>
+#define S_L_OUT 0b100    //  ^
+#define S_L_CHK 0b101    //  ^>
 
 /* addressing modes */
 

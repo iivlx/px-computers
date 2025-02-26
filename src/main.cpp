@@ -8,6 +8,7 @@
 #include "pxCPU.h"
 #include "pxClock.h"
 #include "pxDisplay.h"
+#include "pxKeyboard.h"
 #include "pxMainboard.h"
 #include "pxRAM.h"
 #include "pxROM.h"
@@ -33,7 +34,8 @@ int main(int argc, char* argv[]) {
   PxRAM* ram = new PxRAM(0x8000); // 32KB  RAM
   PxRAM* ram2 = new PxRAM(0x1E00); // 7,680 bytes secondary RAM
   PxROM* rom = new PxROM(0x200); // 256 bytes ROM
-  PxDisplay* display = new PxDisplay(64, 64, true, 1.0f); // 64x64 display - 24,832 bytes
+  PxKeyboard* keyboard = new PxKeyboard(0x64); // 100 key keyboard
+  PxDisplay* display = new PxDisplay(64, 64, true, 0.5f); // 64x64 display - 24,832 bytes
 
   // add devices to mainboard
   mainboard->addCPU(cpu);
@@ -117,7 +119,7 @@ int main(int argc, char* argv[]) {
   rom->writeBytes(0x0000, code, sizeof(code));
 
   // add virtual computer's display to the screen and run
-  screen.addDisplay(display);
+  screen.addDevice(display);
   mainWindow.run(screen, std::vector<PxMainboard*>{mainboard});
 
   return 0;

@@ -25,14 +25,20 @@ void ScreenInput::mouseClickDown(float x, float y) {
 
   std::cout << "Coords: " << ndcX << ", " << ndcY << std::endl;
 
-  // some horrible factoring here...
+  // Check what was clicked on:
+   
+  // 1. Keyboard
+
+
+  // 2. Display
+  // some horrible factoring here...indeed...
   for (auto it = screen->displays.rbegin(); it != screen->displays.rend(); ++it) {
 
     auto display = *it;
 
-    float xOffset = display->x_offset;
-    float yOffset = display->y_offset;
     float scale = display->scale;
+    float xOffset = display->x_offset * scale;
+    float yOffset = display->y_offset * scale;
     auto [width, height] = display->getSize();
 
     if (ndcX >= xOffset - (scale) && ndcX <= xOffset + scale
@@ -63,8 +69,8 @@ void ScreenInput::mouseMove(float x, float y) {
   if (dragging) {
     auto display = static_cast<PxDisplay*>(clicked);
 
-    float dx = (drag_x - ndcX);
-    float dy = (drag_y - ndcY);
+    float dx = (drag_x - ndcX) / display->scale;
+    float dy = (drag_y - ndcY) / display->scale;
 
     drag_x = ndcX;
     drag_y = ndcY;
@@ -100,9 +106,9 @@ bool ScreenInput::mouseOverPxDevice(float x, float y) {
 
     auto display = *it;
 
-    float xOffset = display->x_offset;
-    float yOffset = display->y_offset;
     float scale = display->scale;
+    float xOffset = display->x_offset * scale;
+    float yOffset = display->y_offset * scale;
     auto [width, height] = display->getSize();
 
     if (ndcX >= xOffset - (scale) && ndcX <= xOffset + scale
@@ -111,4 +117,14 @@ bool ScreenInput::mouseOverPxDevice(float x, float y) {
     }
   }
   return false;
+}
+
+void ScreenInput::keyDown(int character, bool repeat) {
+  if (clicked == nullptr) return; // Need a focused device for text input...
+
+  // Check if `clicked` is a pxKeyboard ?
+
+  // Send correct bytes to pxKeyboard ?
+
+
 }

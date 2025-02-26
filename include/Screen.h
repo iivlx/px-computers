@@ -6,6 +6,7 @@
 #include "ScreenInput.h"
 
 #include "pxDisplay.h"
+#include "pxKeyboard.h"
 
 class Window;
 class ScreenInput;
@@ -15,16 +16,21 @@ public:
   Screen(Window* window, int width, int height);
   ~Screen();
 
-  void render(PxDisplay* display, float x_offset = 1.0f, float y_offset = 1.0f);
+  void render(); // render all devices
+  void renderDisplay(PxDisplay* display, float x_offset = 1.0f, float y_offset = 1.0f);
+  void renderKeyboard(PxKeyboard* keyboard);
 
+  void addDevice(PxDevice* device);
   void addDisplay(PxDisplay* display);
-  void moveToFront(PxDisplay* display);
+  void addKeyboard(PxKeyboard* keyboard);
+  void moveToFront(PxDevice* device);
 
   ScreenInput* input;
 
   GLuint renderProgram;
   GLuint computeProgram;
 
+  std::vector<PxDevice*> devices;
   std::vector<PxDisplay*> displays;
   //std::unordered_map<PxDisplay*, std::pair<GLuint, GLuint>> displays; // textures, vaos
 

@@ -44,9 +44,9 @@ public:
   GLuint textureID;
   GLuint VAO;
 
-  float x_offset = 0.1f;
-  float y_offset = 0.1f;
-  float scale = 0.8f;
+  float x_offset;
+  float y_offset;
+  float scale;
 
 private:
   void handleControlRegisterWrite(uint16_t address, uint8_t value);

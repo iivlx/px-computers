@@ -7,25 +7,6 @@
 #include <unordered_map>
 #include <functional>
 
-/*
- *
- *        MUL< [A], [B]                
- *        MOV> [B]                     ; A:B = A*B /
- * 
- *        ADD< [Alow], [Blow]
- *        ADD> [Ahigh], [Bhigh]        ; Ah:Al = Ah:Al + Bh:Bl
- *
- *
- *
- *
- *       ADD<  [All], [Bll]             ; QWORD
- *       ADD<> [Alh], [Blh]
- *       ADD<> [Ahl], [Bhl]
- *       ADD>  [Ahh], [Bhh]             ; carry through... so now Ahh:Ahl:Alh:All has the QWORD A + B
- *
- *
- */
-
 /* 
  * Stack mode is the first 2 bits, so 00, 01, 10, 11... 0, 64, 128, 192
  * Opcodes are the last 6 bits, so these are the same: 0-63, 64-127, 128-191, 192-255
@@ -33,7 +14,6 @@
  *
  *
  */
-
 
 #include "pxMainboard.h"
 

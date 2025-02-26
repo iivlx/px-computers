@@ -30,6 +30,14 @@ Screen::Screen(Window* window, int width, int height)
 Screen::~Screen() {
 }
 
+void Screen::addDevice(PxDevice* pd) {
+
+  if (auto* display = dynamic_cast<PxDisplay*>(pd)) {
+    addDisplay(display);
+  }
+
+}
+
 void Screen::addDisplay(PxDisplay* pd) {
   initializeTexture(pd->textureID);
   initializeQuadVAO(pd->VAO);
@@ -105,7 +113,7 @@ void Screen::initializeQuadVAO(GLuint& quadVAO) {
 }
 
 /* Render a display's buffer as a texture to the screen... */
-void Screen::render(PxDisplay* display, float x_offset, float y_offset) {
+void Screen::renderDisplay(PxDisplay* display, float x_offset, float y_offset) {
 
   // update the display's texture from its buffer data
   glBindTexture(GL_TEXTURE_2D, display->textureID);
@@ -123,10 +131,10 @@ void Screen::render(PxDisplay* display, float x_offset, float y_offset) {
   glBindVertexArray(0);
 }
 
-void Screen::moveToFront(PxDisplay* display) {
-  auto it = std::find(displays.begin(), displays.end(), display);
-  if (it != displays.end()) {
-    displays.erase(it);
-    displays.emplace_back(display);
+void Screen::moveToFront(PxDevice* pd) {
+  auto it = std::find(devices.begin(), devices.end(), pd);
+  if (it != devices.end()) {
+    devices.erase(it);
+    devices.emplace_back(pd);
   }
 }
