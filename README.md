@@ -79,7 +79,7 @@ After the result of a stack operation the `SP` register will be adjusted, and th
 
 # px-assembly
 
-See thee [px-assembly](README-assembly.md) readme file.
+See thee [px-assembly](docs/README-assembly.md) readme file.
 
 
 # px-devices
