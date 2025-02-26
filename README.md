@@ -11,6 +11,8 @@ cp -r shaders/ out/build/bin/Debug/           - copy shaders/ to same directory 
 out/build/bin/Debug/px-computers.exe          - run the executable
 ```
 
+![spiral program](docs/images/spiral.png)
+
 # px-mainboard
 
 The main part of each computer system is the `px-mainboard`, it acts as the motherboard or host controller for all attached devices.
