@@ -4,7 +4,7 @@
 /* This should take the input string and pass it to the px-assembler python program, and then
  * return the machine code bytes and size...
  */
-std::pair<uint8_t*, size_t> PxAssemble(std::string code) {
+std::pair<uint8_t*, size_t> pxAssemble(std::string code) {
   // returns some assembly code...
   uint8_t test_code[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

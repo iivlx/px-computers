@@ -58,6 +58,7 @@ void Screen::initializeShaderPrograms() {
   initializeShader(computeProgram, computeShaders);
 }
 
+
 void Screen::initializeShaderUniforms() {
   xOffsetLoc = glGetUniformLocation(renderProgram, "xOffset");
   yOffsetLoc = glGetUniformLocation(renderProgram, "yOffset");

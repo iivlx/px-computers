@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "pxDevice.h"
+#include "PxDevice.h"
 
 //enum PXKEYBOARD {
 //  // write addresses

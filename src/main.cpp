@@ -5,13 +5,13 @@
 #include "Window.h"
 #include "Screen.h"
 
-#include "pxCPU.h"
-#include "pxClock.h"
-#include "pxDisplay.h"
-#include "pxKeyboard.h"
-#include "pxMainboard.h"
-#include "pxRAM.h"
-#include "pxROM.h"
+#include "PxCPU.h"
+#include "PxClock.h"
+#include "PxDisplay.h"
+#include "PxKeyboard.h"
+#include "PxMainboard.h"
+#include "PxRAM.h"
+#include "PxROM.h"
 
 #ifdef SUBSYSTEM_WINDOWS
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 #endif
 
   // Initialize display
-  Window mainWindow(512, 512, "PxComputers");
+  Window mainWindow(512, 512, "px-computers");
   Screen screen(&mainWindow, 64, 64);
 
   // Create virtual computer

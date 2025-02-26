@@ -6,10 +6,10 @@
 #include <stdexcept>
 #include <string>
 
-#include "pxCPU.h" 
-#include "pxClock.h" 
-#include "pxDevice.h" 
-#include "pxDisplay.h"
+#include "PxCPU.h" 
+#include "PxClock.h" 
+#include "PxDevice.h" 
+#include "PxDisplay.h"
 
 class PxCPU;
 //class PxDisplay;

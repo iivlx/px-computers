@@ -5,8 +5,8 @@
 
 #include "ScreenInput.h"
 
-#include "pxDisplay.h"
-#include "pxKeyboard.h"
+#include "PxDisplay.h"
+#include "PxKeyboard.h"
 
 class Window;
 class ScreenInput;

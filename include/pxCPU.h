@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <functional>
 
+#include "PxMainboard.h"
+
 /* 
  * Stack mode is the first 2 bits, so 00, 01, 10, 11... 0, 64, 128, 192
  * Opcodes are the last 6 bits, so these are the same: 0-63, 64-127, 128-191, 192-255
@@ -14,8 +16,6 @@
  *
  *
  */
-
-#include "pxMainboard.h"
 
  // Big-endian...
 

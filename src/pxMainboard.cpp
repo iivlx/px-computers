@@ -1,7 +1,7 @@
 #include <unordered_map>
 
-#include "pxMainboard.h"
-#include "pxCPU.h"
+#include "PxMainboard.h"
+#include "PxCPU.h"
 
 
 uint8_t PxMainboard::readByte(uint16_t address) const {

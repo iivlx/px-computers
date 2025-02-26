@@ -2,8 +2,8 @@
 
 #include "Screen.h"
 
-#include "pxDevice.h"
-#include "pxDisplay.h"
+#include "PxDevice.h"
+#include "PxDisplay.h"
 
 class Screen;
 

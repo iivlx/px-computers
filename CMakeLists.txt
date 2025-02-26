@@ -10,11 +10,11 @@ set(SOURCES
     src/ScreenInput.cpp
     src/Window.cpp
     src/pxAssemble.cpp
-    src/pxCPU.cpp
-    src/pxDisplay.cpp
-    src/pxKeyboard.cpp
-    src/pxMainboard.cpp
     src/pxOpenGL.cpp
+    src/PxCPU.cpp
+    src/PxDisplay.cpp
+    src/PxKeyboard.cpp
+    src/PxMainboard.cpp
 )
 
 set(HEADERS

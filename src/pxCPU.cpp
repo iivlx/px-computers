@@ -1,18 +1,19 @@
-#include "PxCPU.h"
-#include "PxMainboard.h"
-#include "PxDisplay.h"
-
-#include "PxDevice.h"
-
-#include "PxMath.h"
-#include "PxFloat.h"
-
 #include <chrono>
 #include <thread>
 #include <math.h>
 #include <random>
 
 #include <iostream>
+
+#include "PxCPU.h"
+#include "PxMainboard.h"
+#include "PxDisplay.h"
+
+#include "PxDevice.h"
+
+#include "pxMath.h"
+#include "pxFloat.h"
+
 
 /* addressing modes */
 

@@ -10,7 +10,7 @@
 
 #include <GL/gl.h>
 
-#include "pxDevice.h"
+#include "PxDevice.h"
 
 enum PXDISPLAY {
   // write addresses

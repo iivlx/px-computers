@@ -4,7 +4,7 @@
 
 #include "pxOpenGL.h"
 
-#include "pxDisplay.h"
+#include "PxDisplay.h"
 
 
 PxDisplay::PxDisplay(int width, int height, bool doubleBuffering, float scale)

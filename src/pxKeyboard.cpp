@@ -1,4 +1,4 @@
-#include "pxKeyboard.h"
+#include "PxKeyboard.h"
 
 
 PxKeyboard::PxKeyboard(int buffer_size)

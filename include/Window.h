@@ -7,7 +7,7 @@
 
 #include "pxOpenGL.h"
 
-#include "pxMainboard.h"
+#include "PxMainboard.h"
 
 class Screen;
 
