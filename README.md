@@ -11,7 +11,7 @@ cp -r shaders/ out/build/bin/Debug/           - copy shaders/ to same directory 
 out/build/bin/Debug/px-computers.exe          - run the executable
 ```
 
-![spiral program](docs/images/spiral.png)
+<img src="docs/images/spiral.png" alt="spiral program" width="256" height="256"/>
 
 # px-mainboard
 
