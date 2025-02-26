@@ -1,7 +1,7 @@
 from pprint import pprint
 from collections import OrderedDict
 
-from pxAssemblerFloat import encodeFloat
+encodeFloat = getattr(__import__('px-assembler_float'), 'encodeFloat') #from pxAssemblerFloat import encodeFloat
 
 """ pxAssembler - Assembler for converting px assembly code into machine code.
 
