@@ -1,9 +1,11 @@
+import sys
+
 from pprint import pprint
 from collections import OrderedDict
 
 encodeFloat = getattr(__import__('px-assembler_float'), 'encodeFloat') #from pxAssemblerFloat import encodeFloat
 
-""" pxAssembler - Assembler for converting px assembly code into machine code.
+""" px-assembler - Assembler for converting px assembly code into machine code.
 
 The Assembler class reads an input file and translates the directives and instructions into a binary listing,
 it then converts the binary listing into a binary output file.
@@ -405,8 +407,8 @@ class Assembler:
         if not address: raise ValueError(f"No address set in section {self.current_section}")
         self.symbols[label.replace(":","")] = address
         
-    def print_tables(self):
-        PRINT_COMMENTS = True
+    def print_tables(self, comments=False):
+        PRINT_COMMENTS = comments
 
         # symbol table
         print("Symbol table:")
@@ -477,8 +479,13 @@ class Assembler:
 
     def load_source(self, filename):
         """ load assembly source code from an input file """
-        with open(filename, "r") as assembly_file:
-            self.source = assembly_file.readlines()
+
+        try:
+            with open(filename, "r") as assembly_file:
+                self.source = assembly_file.readlines()
+
+        except FileNotFoundError:
+            raise RuntimeError(f"Error: File `{filename}` not found.")
 
     def write_output(self, filename):
         """ write the machine code to an output file """
@@ -498,12 +505,68 @@ class Assembler:
 
                 last_address = address + len(binary)
 
+def printUsageAndExit():
+    print("Usage:")
+    print("   px-assembler.py [-h | --help] [-v | --version] <input_file> [-o <output_file>] [-p[c] | [-b | --bytes] | [-x | --hex]]")
+    print("")
+    print("   Assembles the <input_file>, with specified options below.")
+    print("")
+    print("Options:                                                      ")
+    print("   -o <output_file>  write binary to <output_file>            ")
+    print("   -p                print tables                             ")
+    print("   -pc               print tables with comments               ")
+    print("   -b, --bytes       prints machine code as raw bytes         ")
+    print("   -x, --hex         prints machine code as hexadecimal       ")
+    print("   -h, --help        displays this help message and exits     ")
+    print("   -v, --version     displays version information and exits   ")
+    exit(1)
 
 if __name__=="__main__":
 
-  asm = Assembler()
-  asm.load_source("input.pa")
-  asm.assemble()
+    try:
+      # input
+      if len(sys.argv) < 2:
+        print("Error: no input file specified")
+        print("Try `px-assembler --help` for more info.")
+        exit(1)
+     
+      if "-h" in sys.argv or "--help" in sys.argv:
+        printUsageAndExit()
+      if "-v" in sys.argv or "--version" in sys.argv:
+        printUsageAndExit()
 
-  asm.print_tables()
-  asm.write_output("output.pbin")
+      input_file = sys.argv[1]
+
+      print_tables = "-p" in sys.argv or "-pc" in sys.argv
+      print_comments = "-pc" in sys.argv
+      print_bytes = "-b" in sys.argv or "--bytes" in sys.argv
+      print_hex = "-x" in sys.argv or "--hex" in sys.argv
+
+      output_file = None
+      if "-o" in sys.argv:
+        index = sys.argv.index("-o") + 1
+        if index < len(sys.argv):
+          if sys.argv[index].startswith("-"):
+            raise RuntimeError("Error: invalid filename specified after -o")
+          output_file = sys.argv[index]
+        else:
+          raise RuntimeError("Error: no file specified after -o")
+
+      # assemble
+      asm = Assembler()
+      asm.load_source(input_file)
+      asm.assemble()
+
+      # output
+      if print_tables:
+        asm.print_tables(print_comments)
+      if output_file:
+        asm.write_output(output_file)
+      if print_bytes:
+        raise RuntimeError("Error: NOT IMPLEMENTED... print_bytes()")
+      if print_hex:
+        raise RuntimeError("Error: NOT IMPLEMENTED... print_hex()")
+
+    except RuntimeError as e:
+      print(f"{e}", file=sys.stderr)
+      exit(1)

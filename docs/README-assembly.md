@@ -1,9 +1,9 @@
 # px-assembly
 
 The `px assembly` language is a **16-bit assembly language** designed for **MMIO interactions** and **low-level system control**. 
-It uses a **stack-based** approach for multi-word operations, such as arithmetic and data movement, rather than relying on flags for return values.
+It uses a **stack-based** approach for multi-word operations, such as arithmetic, data movement, and control flow, rather than relying on flags for return values.
 Overflow, multi-step calculations, and branching are managed through **pushing and popping values** on the stack.
-The instructions are designed to be flexible and general, allowing **direct stack manipulation** for conditional branching and smooth execution chains.
+The instructions are designed to be flexible and general, allowing **direct stack manipulation** per operation for conditional branching and smooth execution chains.
 
 ## Stack control
 

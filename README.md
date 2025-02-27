@@ -1,5 +1,5 @@
 # px-computers
-Virtual computer emulator with MMIO devices (OpenGL displays, I/O peripherals, and CPUs running "px assembly").
+Virtual computer emulator with MMIO devices (OpenGL displays, I/O, peripherals, and CPUs running `px assembly`).
 
 
 ## how to build and run
@@ -7,8 +7,8 @@ Virtual computer emulator with MMIO devices (OpenGL displays, I/O peripherals, a
 ```
 cmake CMakeLists.txt -B out/build/            - use cmake to generate build files
 cmake --build out/build/                      - use cmake to create binary executable
-cp -r shaders/ out/build/bin/Debug/           - copy shaders/ to same directory as binary
-out/build/bin/Debug/px-computers.exe          - run the executable
+cp out/build/bin/Debug/px-computers.exe .     - copy executable to the root directory
+./px-computers.exe                            - run the executable
 ```
 
 <img src="docs/images/spiral.png" alt="spiral program" width="256" height="256"/>
@@ -79,7 +79,7 @@ After the result of a stack operation the `SP` register will be adjusted, and th
 
 # px-assembly
 
-See thee [px-assembly](docs/README-assembly.md) readme file.
+See the [px-assembly](docs/README-assembly.md) readme file, or [examples](docs/README-assembly.md#Examples).
 
 
 # px-devices

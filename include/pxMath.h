@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 #define DEGREES_PER_RAD 57.2958
 
 /* returns the arctan in integer degrees */
