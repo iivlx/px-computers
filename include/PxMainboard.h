@@ -45,6 +45,6 @@ public:
   void setResetVector(uint16_t address) { reset_vector = address; };
   uint16_t getResetVector() const { return reset_vector; };
 
-  std::pair<PxDevice*, uint16_t> PxMainboard::resolveDevice(uint16_t address) const;
+  std::pair<PxDevice*, uint16_t> resolveDevice(uint16_t address) const;
 
 };

@@ -67,10 +67,6 @@ private:
   uint8_t randbyte();
   uint16_t randword();
 
-  //tmp
-  void PxCPU::add();
-  //tmp
-
   void pushStack(uint16_t value);
   uint16_t peekStack();
   uint16_t popStack();
