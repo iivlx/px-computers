@@ -15,15 +15,19 @@ If both `<` and `>` are appended to an operation, a value will be popped from th
 
 `^` can be used instead of `<` to push only the lower byte of the result, ignoring any overflow or regular results.
 
-## Every operand is an address
+## Every operand is either an immediate value or an address
 
-Every operand is an address that can be accessed in one of three modes in two different bit widths: byte or word.
+Every operand can be an **immediate value**, or either a **direct** or **indirect address**, which can be two different bit widths: **byte** or **word**.
 
-Immediate - A direct numerical value used in the operation.
+**Immediate** - A direct numerical value used in the operation.
 
-Direct - Accesses a specific memory location and uses its value. Specified by `[ ]`
+**Direct** - Accesses a specific memory location and uses its value. Specified by `[ ]`
 
-Indirect - Accesses a memory location which serves as a pointer to the value. Specified by `( )`
+**Indirect** - Accesses a memory location which serves as a pointer to the value. Specified by `( )`
+
+**Byte** - Use either an immediate byte value, or load a byte from the address, specified by prepending a `#`.
+
+**Word** - Use a word (two bytes) for the size of the immediate value, or load a word (two bytes) from the address, this is the default operand size.
 
 ## Examples
 
@@ -56,4 +60,20 @@ Loop:
     JLT> Loop                       ; loop from t=0..255
 Done:
                                     ; t=255
+```
+
+
+# Examples of stack operations explained for some instructions
+
+```
+MUL< 0x10, 0x10                     ; PUSH 0x100
+
+MOV^ 0, [COLOR]                     ; PUSH [COLOR] && 0xFFFF
+
+ADD_ [a], [b]                       ; [a] += [b]
+ADD> [a], [b]                       ; [a] += [b] + POP()
+ADD<> [a], [b]                      ; [a] += [b] + POP() ... PUSH [a] >> 0x10
+ADD^> [a], [b]                      ; [a] += [b] + POP() ... PUSH [a] && 0xFFFF
+ADD< [a], [b]                       ; [a] += [b] ... PUSH [a] >> 0x10
+ADD^ [a], [b]                       ; [a] += [b] ... PUSH [a] && 0xFFFF
 ```
