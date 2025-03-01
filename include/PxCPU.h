@@ -9,14 +9,6 @@
 
 #include "PxMainboard.h"
 
-/* 
- * Stack mode is the first 2 bits, so 00, 01, 10, 11... 0, 64, 128, 192
- * Opcodes are the last 6 bits, so these are the same: 0-63, 64-127, 128-191, 192-255
- * 
- *
- *
- */
-
  // Big-endian...
 
 class PxMainboard;
@@ -31,13 +23,14 @@ public:
     initializeInstructionSet();
     reset();
   };
+
   ~PxCPU() {};
 
   void tick();
   void halt();
   void reset();
-  uint64_t getCycles() { return CYCLES; };
 
+  uint64_t getCycles();
   int getRunningTime();
 
   PxMainboard* mainboard;
@@ -55,29 +48,20 @@ private:
   std::chrono::steady_clock::time_point startupTime;
   /* ------------- */
 
-
-
-  void sleep(uint64_t n);
-  std::function<void()> decode(uint8_t ir);
-  void execute();
-  void nop();
   uint8_t fetchByte();
   uint16_t fetchWord();
-
-  uint8_t randbyte();
-  uint16_t randword();
 
   void pushStack(uint16_t value);
   uint16_t peekStack();
   uint16_t popStack();
 
+  std::function<void()> decode(uint8_t ir);
   std::pair<uint16_t, uint16_t> resolveOperand(uint8_t mode);
   void mov();
   void store();
   void unaryOp(std::function<uint32_t(uint32_t)> op);
   void binaryOp(std::function<uint32_t(uint32_t, uint32_t)> op);
   void trinaryOp(std::function<uint32_t(uint32_t, uint32_t)> op);
-  //void quaternaryOp(std::function<uint16_t(uint16_t, uint16_t)> op);
   void jmpOp(std::function<uint32_t(int32_t, int32_t)> operation);   // signed...
   void cmpOp();
   void setOp(uint16_t value);
@@ -85,7 +69,7 @@ private:
   void pop();
   void call();
   void ret();
-
+  void nop();
 
   std::unordered_map<uint8_t, std::function<void()>> instructionSet;
   void initializeInstructionSet();

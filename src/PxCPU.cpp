@@ -1,9 +1,6 @@
 #include <chrono>
 #include <thread>
 #include <math.h>
-#include <random>
-
-#include <iostream>
 
 #include "PxCPU.h"
 #include "PxMainboard.h"
@@ -14,28 +11,6 @@
 #include "pxMath.h"
 #include "pxFloat.h"
 
-
-/* addressing modes */
-
-
-// MUL< 0x10, 0x10     // PUSH 0x100
-
-// MOV^ 0, [COLOR]     // PUSH [COLOR] && 0xFFFF
-// 
-// ADD_ [a], [b]       // [a] += [b]
-// ADD> [a], [b]       // [a] += [b] + POP()
-// ADD<> [a], [b]      // [a] += [b] + POP() ... PUSH [a]+[b] >> 0x10
-// ADD^> [a], [b]      // [a] += [b] + POP() ... PUSH [a]+[b] && 0xFFFF
-// ADD< [a], [b]       // [a] += [b] ... PUSH [a]+[b] >> 0x10
-// ADD^ [a], [b]       // [a] += [b] ... PUSH [a]+[b] && 0xFFFF
-
-// MOV IMM16
-// MOV IMM8
-// MOV DIR16
-// MOV DIR8
-// MOV IND16
-// MOV IND8
-
 /* stack modes */
 
 #define S_NONE  0b000    //  .
@@ -43,7 +18,7 @@
 #define S_OUT   0b010    //  <
 #define S_CHK   0b011    //  <>
 #define S_L_OUT 0b100    //  ^
-#define S_L_CHK 0b101    //  ^>
+#define S_L_CHK 0b110    //  <^
 
 /* addressing modes */
 
@@ -63,20 +38,25 @@
 
 /* opcode macros */
 
-#define UNARYOP(op) unaryOp([](uint32_t a) { return op; })
-#define BINARYOP(op) binaryOp([](uint32_t a, uint32_t b) { return a op b; })
-#define TRINARYOP(op) trinaryOp([](uint32_t a, uint32_t b, uint32_t c) { return a op b op c; })
+// [UNARY/BINARY/TRINARY][F][H][OP]
+// UNARY/BINARY/TRINARY - 1, 2, or 3 operands
+// H, Half - Interpret operands as half precision floating point
+// F, Function - Use a function instead of operator on operands
 
+#define OPCODE(op) [this]() { op; };
+
+#define UNARYOP(op) unaryOp([](uint32_t a) { return op; })
 #define UNARYHOP(op) unaryOp([](uint32_t a) { return encodeHalf((op)(decodeHalf(a))); })
+
+#define BINARYOP(op) binaryOp([](uint32_t a, uint32_t b) { return a op b; })
+#define BINARYFOP(op) binaryOp([](uint32_t a, uint32_t b) { return op(a,b); })
 #define BINARYHOP(op) binaryOp([](uint32_t a, uint32_t b) { return encodeHalf(decodeHalf(a) op decodeHalf(b)); }) // kinda unoptimizatory.
 #define BINARYHFOP(op) binaryOp([](uint32_t a, uint32_t b) { return encodeHalf(op(decodeHalf(a),decodeHalf(b))); })
 
-#define BINARYFOP(op) binaryOp([](uint32_t a, uint32_t b) { return op(a,b); })
+#define TRINARYOP(op) trinaryOp([](uint32_t a, uint32_t b, uint32_t c) { return a op b op c; })
 
 #define CMPOP() cmpOp()
 #define JMPOP(op) jmpOp([](int32_t a, int32_t b) { return a op b; })
-
-//#define SETOP(value, indirect) setOp(value, indirect)
 
 #define HALT() reset()
 #define RST() reset()
@@ -87,31 +67,9 @@
 #define RET() ret()
 #define HALF(op) encodeHalf(op(decodeHalf(a)))
 
-#define OPCODE(op) [this]() { op; };
-//#define STACKFUNC(op) [this](uint8_t stack_mode) { op; };
-
-/* helper functions */
-
-float square(float a) {
-  return a * a;
-}
-                                                                     
-uint8_t PxCPU::randbyte() {                                       
-  static std::random_device rd;                                      
-  static std::mt19937 gen(rd());                                     
-  std::uniform_int_distribution<> dist(0, 255);                      
-  return dist(gen);                                                  
-}                                                                    
-                                                                     
-uint16_t PxCPU::randword() {                                      
-  static std::random_device rd;                                      
-  static std::mt19937 gen(rd());                                     
-  std::uniform_int_distribution<> dist(0, 65536);                    
-  return dist(gen);                                                  
-}                                                                    
-
-
 /* timing functions */
+
+uint64_t PxCPU::getCycles() { return CYCLES; };
 
 int PxCPU::getRunningTime() {
   auto now = std::chrono::high_resolution_clock::now();
@@ -120,7 +78,6 @@ int PxCPU::getRunningTime() {
 }
 
 /* fetch instructions */
-
 
 uint8_t PxCPU::fetchByte() {
   return mainboard->readByte(PC++);
@@ -135,54 +92,49 @@ uint16_t PxCPU::fetchWord() {
 
 /* resolve instructions */
 
-
 std::pair<uint16_t, uint16_t> PxCPU::resolveOperand(uint8_t mode) {
   uint16_t address = 0;
   uint16_t value = 0;
   switch (mode) {
-      case IMM16:
-          value = fetchWord();
-          return {0, value};
-      case IMM8:
-          value = fetchByte();
-          return { 0, value };
+    case IMM16:
+      value = fetchWord();
+      return {0, value};
+    case IMM8:
+      value = fetchByte();
+      return { 0, value };
 
-      case DIR16:
-        address = fetchWord();
-        value = mainboard->readWord(address);
-        return { address, value };
-      case DIR8: 
-        address = fetchWord();
-        value = mainboard->readByte(address);
-        return { address, value };
+    case DIR16:
+      address = fetchWord();
+      value = mainboard->readWord(address);
+      return { address, value };
+    case DIR8: 
+      address = fetchWord();
+      value = mainboard->readByte(address);
+      return { address, value };
 
-      case IND16: 
-        address = mainboard->readWord(fetchWord());
-        value = mainboard->readWord(address);
-        return { address, value };
-      case IND8:
-        address = mainboard->readWord(fetchWord());
-        value = mainboard->readByte(address);
-        return { address, value };
+    case IND16: 
+      address = mainboard->readWord(fetchWord());
+      value = mainboard->readWord(address);
+      return { address, value };
+    case IND8:
+      address = mainboard->readWord(fetchWord());
+      value = mainboard->readByte(address);
+      return { address, value };
 
-      default:
-          throw std::runtime_error("Invalid operand mode");
+    default:
+        throw std::runtime_error("Invalid operand mode");
   }
 }
 
 /* cpu cycle */
 
-
 void PxCPU::tick() {
   if (cycleCost > 0) { --cycleCost; return; } // executing...(however we execute THEN wait on execution... somehow lol)
   CYCLES++;
 
-  auto PCL = this->PC;
-    
   IR = fetchByte();
   auto instruction = decode(IR);
   instruction();
-
 };
 
 std::function<void()> PxCPU::decode(uint8_t opcode) {
@@ -196,9 +148,7 @@ std::function<void()> PxCPU::decode(uint8_t opcode) {
   }
 }
 
-
 /* stack operations */
-
 
 void PxCPU::pushStack(uint16_t value) {
   SP -= 2;
@@ -216,9 +166,7 @@ uint16_t PxCPU::popStack() {
   return value;
 }
 
-
 /* cpu operations */
-
 
 void PxCPU::nop() {
   // should be able to still do stack nops... >, <, <>
@@ -341,10 +289,10 @@ void PxCPU::cmpOp() {
   // modes
   uint8_t stack_mode = fetchByte();
   uint8_t mode = fetchByte();
-  bool left_signed = (mode & 0b10000000) != 0;             // bit 7
-  uint8_t left_mode = (mode >> 4) & 0b0111;                // bits 6-4
-  bool right_signed = (mode & 0b00001000) != 0;            // bit 3
-  uint8_t right_mode = mode & 0b0111;                      // bits 2-0
+  bool left_signed = (mode & 0b10000000) != 0;             //bit 7
+  uint8_t left_mode = (mode >> 4) & 0b0111;                //bits 6-4
+  bool right_signed = (mode & 0b00001000) != 0;            //bit 3 
+  uint8_t right_mode = mode & 0b0111;                      //bits 2-0
 
   // operands
   auto [left_a, left_v] = resolveOperand(left_mode);
@@ -448,16 +396,14 @@ void PxCPU::initializeInstructionSet() {
   //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // TAN
   //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // ATAN
 
+  //instructionSet[0x55] = OPCODE(UNARYOP(abs(a)));                                // ABS   
+  //instructionSet[0x55] = OPCODE(UNARYOP(sqrt(a)); );                             // SQRT  
+  //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // LN    
+  //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // LOG2  
+  //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // LOG10 
 
-  //instructionSet[0x55] = OPCODE(UNARYOP(abs(a)));                                // ABS
-  //instructionSet[0x55] = OPCODE(UNARYOP(sqrt(a)); );                             // SQRT
-  //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // LN
-  //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // LOG2
-  //instructionSet[0x55] = OPCODE(UNARYOP(a));                                     // LOG10
-  
   //instructionSet[0x55] = OPCODE(UNARYOP());                                      // RAND
   
-
   instructionSet[0x60] = OPCODE(CMPOP());                                          // CMP
   //instructionSet[0x61] = OPCODE(CMPOPS());                                       // CMP (signed)
                                                                                    
