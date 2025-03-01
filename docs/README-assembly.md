@@ -5,6 +5,8 @@ It uses a **stack-based** approach for multi-word operations, such as arithmetic
 Overflow, multi-step calculations, and branching are managed through **pushing and popping values** on the stack.
 The instructions are designed to be flexible and general, allowing **direct stack manipulation** per operation for conditional branching and smooth execution chains.
 
+---
+
 ## Stack control
 
 Values can be pushed onto the stack at the end of an operation by appending `<` to the instruction.
@@ -29,7 +31,9 @@ Every operand can be an **immediate value**, or either a **direct** or **indirec
 
 **Word** - Use a word (two bytes) for the size of the immediate value, or load a word (two bytes) from the address, this is the default operand size.
 
-## Examples
+---
+
+### Examples
 
 Multiply DWORDS:
 ```
@@ -63,7 +67,7 @@ Done:
 ```
 
 
-# Examples of stack operations explained for some instructions
+### Examples of stack operations explained for some instructions
 
 ```
 MUL< 0x10, 0x10                     ; PUSH 0x100
