@@ -11,6 +11,11 @@
 
  // Big-endian...
 
+using pxbyte = uint8_t;
+using pxword = uint16_t;
+using pxdword = uint32_t;
+using pxqword = uint64_t;
+
 class PxMainboard;
 
 class PxCPU {
@@ -55,8 +60,8 @@ private:
   uint16_t peekStack();
   uint16_t popStack();
 
-  std::function<void()> decode(uint8_t ir);
-  std::pair<uint16_t, uint16_t> resolveOperand(uint8_t mode);
+  std::function<void()> decode(pxbyte ir);
+  std::pair<pxword, pxword> resolveOperand(pxbyte mode, pxword word);
   void mov();
   void store();
   void unaryOp(std::function<uint32_t(uint32_t)> op);

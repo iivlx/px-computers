@@ -14,8 +14,8 @@
 /* stack modes */
 
 #define S_NONE  0b000    //  .
-#define S_IN    0b001    //  >
-#define S_OUT   0b010    //  <
+#define S_OUT   0b001    //  >
+#define S_IN    0b010    //  <
 #define S_CHK   0b011    //  <>
 #define S_L_OUT 0b100    //  ^
 #define S_L_CHK 0b110    //  <^
@@ -77,7 +77,7 @@ int PxCPU::getRunningTime() {
   return time_span.count();
 }
 
-/* fetch instructions */
+/* fetch functions */
 
 uint8_t PxCPU::fetchByte() {
   return mainboard->readByte(PC++);
@@ -90,39 +90,54 @@ uint16_t PxCPU::fetchWord() {
   return word;
 };
 
-/* resolve instructions */
+/* resolve functions */
 
-std::pair<uint16_t, uint16_t> PxCPU::resolveOperand(uint8_t mode) {
+std::pair<pxword, pxword> PxCPU::resolveOperand(pxbyte mode, pxword word) {
   uint16_t address = 0;
   uint16_t value = 0;
+
   switch (mode) {
     case IMM16:
-      value = fetchWord();
-      return {0, value};
+      value = word;
+      break;
     case IMM8:
-      value = fetchByte();
-      return { 0, value };
+      value = word & 0xFF;
+      break;
 
     case DIR16:
-      address = fetchWord();
+      address = word;
       value = mainboard->readWord(address);
-      return { address, value };
-    case DIR8: 
-      address = fetchWord();
+      break;
+    case DIR8:
+      address = word;
       value = mainboard->readByte(address);
-      return { address, value };
+      break;
 
-    case IND16: 
-      address = mainboard->readWord(fetchWord());
+    case IND16:
+      address = mainboard->readWord(word);
       value = mainboard->readWord(address);
-      return { address, value };
+      break;
     case IND8:
-      address = mainboard->readWord(fetchWord());
+      address = mainboard->readWord(word);
       value = mainboard->readByte(address);
-      return { address, value };
+      break;
 
     default:
-        throw std::runtime_error("Invalid operand mode");
+      throw std::runtime_error("Invalid operand mode");
+  }
+
+  return { address, value };
+}
+
+std::function<void()> PxCPU::decode(uint8_t opcode) {
+
+  auto it = instructionSet.find(opcode);
+  if (it != instructionSet.end()) {
+    auto instruction = it->second;
+    return instruction;
+  }
+  else {
+    throw std::runtime_error("Invalid opcode: " + std::to_string(opcode));
   }
 }
 
@@ -137,15 +152,19 @@ void PxCPU::tick() {
   instruction();
 };
 
-std::function<void()> PxCPU::decode(uint8_t opcode) {
+/* cpu reset */
 
-  auto it = instructionSet.find(opcode);
-  if (it != instructionSet.end()) {
-    auto instruction = it->second;
-    return instruction;
-  } else {
-    throw std::runtime_error("Invalid opcode: " + std::to_string(opcode));
-  }
+void PxCPU::reset() {
+  //PC = mainboard->getResetVector(); // doesn't work // really lol...// yes lol.. you should fix it..
+  PC = 0xFE20; // ...
+  SP = 0xFFFF;
+  IR = 0;
+  CYCLES = 0;
+  INTERRUPT = 0;
+  IVT = 0;
+  cycleCost = 0;
+
+  startupTime = std::chrono::high_resolution_clock::now();
 }
 
 /* stack operations */
@@ -179,22 +198,23 @@ void PxCPU::binaryOp(std::function<uint32_t(uint32_t, uint32_t)> operation) {
   // modes
   uint8_t stack_mode = fetchByte();
   uint8_t mode = fetchByte();
+
   bool left_signed = (mode & 0b10000000) != 0;             // bit 7
   uint8_t left_mode = (mode >> 4) & 0b0111;                // bits 6-4
   bool right_signed = (mode & 0b00001000) != 0;            // bit 3
   uint8_t right_mode = mode & 0b0111;                      // bits 2-0
 
   // operands
-  auto [left_a, left_v] = resolveOperand(left_mode);
-  auto [right_a, right_v] = resolveOperand(right_mode);
+  auto [left_a, left_v] = resolveOperand(left_mode, fetchWord());
+  auto [right_a, right_v] = resolveOperand(right_mode, fetchWord());
 
   // interpret sign
   uint32_t left_value = left_signed ? static_cast<int16_t>(left_v) : static_cast<uint16_t>(left_v);
   uint32_t right_value = right_signed ? static_cast<int16_t>(right_v) : static_cast<uint16_t>(right_v);
 
-  // stack in
+  // pop from stack
   uint16_t carry_in = 0;
-  if (stack_mode == 0b01 || stack_mode == 0b11) { // '>' or '<>'
+  if (stack_mode == S_OUT || stack_mode == S_CHK) { // '>' or '<>'
     carry_in = popStack();
   }
 
@@ -215,8 +235,8 @@ void PxCPU::binaryOp(std::function<uint32_t(uint32_t, uint32_t)> operation) {
     throw std::runtime_error("Left operand mode does not support writing");
   }
 
-  // stack out
-  if (stack_mode == 0b10 || stack_mode == 0b11) { // '<' or '<>'
+  // push to stack
+  if (stack_mode == S_IN || stack_mode == S_CHK) { // '<' or '<>'
     pushStack(high);
   }
 }
@@ -228,11 +248,11 @@ void PxCPU::unaryOp(std::function<uint32_t(uint32_t)> operation) {
   uint8_t left_mode = (mode >> 4) & 0b0111;
 
   // operands
-  auto [left_a, left_v] = resolveOperand(left_mode);
+  auto [left_a, left_v] = resolveOperand(left_mode, fetchWord());
 
-  // stack in
+  // pop from stack
   int16_t carry_in = 0;
-  if (stack_mode == 0b01 || stack_mode == 0b11) {
+  if (stack_mode == S_OUT || stack_mode == S_CHK) {
     carry_in = static_cast<int16_t>(popStack());
   }
 
@@ -250,8 +270,8 @@ void PxCPU::unaryOp(std::function<uint32_t(uint32_t)> operation) {
     mainboard->writeByte(left_a, static_cast<uint8_t>(low));
   }
 
-  // stack out
-  if (stack_mode == 0b10 || stack_mode == 0b11) {
+  // push to stack
+  if (stack_mode == S_IN || stack_mode == S_CHK) {
     pushStack(high);
   }
 }
@@ -263,11 +283,11 @@ void PxCPU::jmpOp(std::function<uint32_t(int32_t, int32_t)> operation) {
   uint8_t left_mode = (mode >> 4 ) & 0b0111;              // bits 6-4
 
   // operands
-  auto [left_a, left_v] = resolveOperand(left_mode);
+  auto [left_a, left_v] = resolveOperand(left_mode, fetchWord());
 
-  // stack in
+  // pop from stack
   int16_t carry_in = 0;
-  if (stack_mode == 0b01 || stack_mode == 0b11) { // '>' or '<>'
+  if (stack_mode == S_OUT || stack_mode == S_CHK) { // '>' or '<>'
     carry_in = static_cast<int16_t>(popStack());  // signed
   }
 
@@ -279,8 +299,8 @@ void PxCPU::jmpOp(std::function<uint32_t(int32_t, int32_t)> operation) {
     PC = left_v;
   }
 
-  // stack out
-  if (stack_mode == 0b10 || stack_mode == 0b11) { // '<' or '<>'
+  // push to stack
+  if (stack_mode == S_IN || stack_mode == S_CHK) { // '<' or '<>'
     pushStack(carry_in);
   }
 }
@@ -295,16 +315,16 @@ void PxCPU::cmpOp() {
   uint8_t right_mode = mode & 0b0111;                      //bits 2-0
 
   // operands
-  auto [left_a, left_v] = resolveOperand(left_mode);
-  auto [right_a, right_v] = resolveOperand(right_mode);
+  auto [left_a, left_v] = resolveOperand(left_mode, fetchWord());
+  auto [right_a, right_v] = resolveOperand(right_mode, fetchWord());
 
   // interpret sign
   uint32_t left_value = left_signed ? static_cast<int16_t>(left_v) : static_cast<uint16_t>(left_v);
   uint32_t right_value = right_signed ? static_cast<int16_t>(right_v) : static_cast<uint16_t>(right_v);
 
-  // stack in
+  // pop from stack
   uint16_t carry_in = 0;
-  if (stack_mode == 0b01 || stack_mode == 0b11) { // '>' or '<>'
+  if (stack_mode == S_OUT || stack_mode == S_CHK) { // '>' or '<>'
     carry_in = popStack();
   }
 
@@ -318,8 +338,8 @@ void PxCPU::cmpOp() {
     result = 0;
   }
 
-  // stack out
-  if (stack_mode == 0b10 || stack_mode == 0b11) { // '<' or '<>'
+  // push to stack
+  if (stack_mode == S_IN || stack_mode == S_CHK) { // '<' or '<>'
     pushStack(result);
   }
 }
@@ -333,21 +353,7 @@ void PxCPU::ret() {
   //SP += 2;
 }
 
-void PxCPU::reset() {
-  //PC = mainboard->getResetVector(); // doesn't work // really lol...// yes lol.. you should fix it..
-  PC = 0xFE20; // ...
-  SP = 0xFFFF;
-  IR = 0;
-  CYCLES = 0;
-  INTERRUPT = 0;
-  IVT = 0;
-  cycleCost = 0;
-
-  startupTime = std::chrono::high_resolution_clock::now();
-}
-
 /* cpu instruction set */
-
 void PxCPU::initializeInstructionSet() {
   instructionSet[0x00] = OPCODE(NOP());                                            // NOP
                                                                                  

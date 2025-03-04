@@ -16,7 +16,7 @@ std::pair<uint8_t*, size_t> pxAssemble(std::string input_file, std::string outpu
   std::string line;
 
   if (result != 0) {
-    std::cerr << "Assembly failed:" << std::endl;
+    std::cerr << "Assembly failed: " << command << std::endl;
     if (error_file.peek() != std::ifstream::traits_type::eof()) {
       while (std::getline(error_file, line)) {
         std::cerr << "  " << line << std::endl;
