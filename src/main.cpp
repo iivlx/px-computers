@@ -14,13 +14,18 @@
 #include "PxRAM.h"
 #include "PxROM.h"
 
+int main(int argc, char* argv[]);
+
 #ifdef SUBSYSTEM_WINDOWS
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+  int argc = 0;
+  char* argv[] = {0};
+
+  return main(argc, argv);
+}
 #endif
 
-#ifdef SUBSYSTEM_CONSOLE
 int main(int argc, char* argv[]) {
-#endif
 
   // Initialize display
   Window mainWindow(512, 512, "px-computers");
