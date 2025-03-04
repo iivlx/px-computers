@@ -23,12 +23,11 @@
 .DEF CENTER_Y 0x20                          ; 32
 .DEF WIDTH 0x40                             ; 64
 .DEF HEIGHT 0x40                            ; 64
-                                            
 .SECTION DATA                               
 .ORG 0xFE00                                 
                                             
 data:                                       
-  .DB 0x00, 0x00                            ; random placeholder                   
+  .DB 0x00, 0x00                            ; random placeholder
                                   
 .SECTION CODE                     
 .ORG 0xFE20                       
@@ -65,7 +64,7 @@ Loop:
         HALF [Dist]
         SQRT [Dist]                         ; distance = sqrt(Dx^2 + Dy^2)
 
-        ;  spiral
+        ; spiral
         MOV [Dx], [X]
         SUB [Dx], CENTER_X                  ; Dx = X - CenterX                                   
         MOV [Dy], [Y]                      
@@ -89,17 +88,17 @@ Loop:
         
         Draw:
         MOV [Color], [S]
-        MOV (P), [Color]                    ;R
+        MOV #(P), [Color]                    ;R
 
-        ;MOV [Color], [S]
-        ;DIV [Color], 2
-        ;INC [P]
-        ;MOV (P), [Color]                    ;G
+        MOV [Color], [S]
+        DIV [Color], 2
+        INC [P]
+        MOV #(P), [Color]                    ;G
         
         ;MOV [Color], [S]
         ;DIV [Color], 3
         ;INC [P]
-        ;MOV (P), [Color]                   ;B
+        ;MOV #(P), [Color]                   ;B
 
 
         INC [X]                             ; next col

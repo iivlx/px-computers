@@ -225,14 +225,11 @@ void PxCPU::binaryOp(std::function<uint32_t(uint32_t, uint32_t)> operation) {
   uint16_t high = (result >> 0x10);
 
   // write
-  if (left_mode == 0b100 || left_mode == 0b010) {      // word
+  if (left_mode == IND16 || left_mode == DIR16) {    // word
     mainboard->writeWord(left_a, low);
   }
-  else if (left_mode == 0b011 || left_mode == 0b101) { // byte
+  else if (left_mode == IND8 || left_mode == DIR8) { // byte
     mainboard->writeByte(left_a, static_cast<uint8_t>(low));
-  }
-  else {
-    throw std::runtime_error("Left operand mode does not support writing");
   }
 
   // push to stack
@@ -263,10 +260,10 @@ void PxCPU::unaryOp(std::function<uint32_t(uint32_t)> operation) {
   uint16_t high = (result >> 0x10);
 
   // write
-  if (left_mode == 0b100 || left_mode == 0b010) {      // word
+  if (left_mode == IND16 || left_mode == DIR16) {    // word
     mainboard->writeWord(left_a, low);
   }
-  else if (left_mode == 0b011 || left_mode == 0b101) { // byte
+  else if (left_mode == IND8 || left_mode == DIR8) { // byte
     mainboard->writeByte(left_a, static_cast<uint8_t>(low));
   }
 

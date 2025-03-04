@@ -115,19 +115,21 @@ class Assembler:
       operands = instruction[1][1:]
       operands = self.resolve_operands(operands)
 
+      mode_byte = 0
+
       # operands
       operand_bytes = []
-      mode_byte = 0
-      for operand in operands:
-          mode, value = operand
+      for mode, value in operands:
 
           # mode byte
           mode_byte <<= 4
+
           bits = OPERAND_MODES[mode]
           mode_byte += bits
 
           # operand bytes
           if mode in ["immediate8", "direct8", "indirect8"]:
+              operand_bytes.append(0x00) # zero pad
               operand_bytes.append(value)
 
           if mode in ["immediate16", "direct16", "indirect16"]:
@@ -136,8 +138,7 @@ class Assembler:
 
               operand_bytes.extend([byte_high, byte_low])
 
-      # ...
-      if len(operands) < 2: mode_byte <<= 4
+      if len(operands) < 2: mode_byte <<= 4 # always shift left operand to left half of the byte
 
       machine_code.append(opcode)
       machine_code.append(STACK_MODES[stack_mode])
@@ -179,16 +180,20 @@ class Assembler:
         """ resolve mode type from operand tokens """
 
         mode = "immediate"
+        width = "16"
+
+        # width
+        if '#' in tokens:
+            width = "8"
+            tokens.remove('#')
+
+        # mode
         if tokens[0] == '[' and tokens[-1] == ']':
             mode = "direct"
         if tokens[0] == '(' and tokens[-1] == ')':
             mode = "indirect"
-        if '#' in tokens:
-            mode += "8"
-        else:
-            mode += "16"
 
-        return mode
+        return mode+width
         
     def resolve_operation_and_mode(self, operation):
       """ split operation and stack mode """
