@@ -11,136 +11,6 @@
 #include "pxMath.h"
 #include "pxFloat.h"
 
-/* stack modes */
-
-#define S_NONE  0b000    //  .
-#define S_OUT   0b001    //  >
-#define S_IN    0b010    //  <
-#define S_CHK   0b011    //  <>
-#define S_L_OUT 0b100    //  ^
-#define S_L_CHK 0b110    //  <^
-
-/* addressing modes */
-
-#define IMM16 0b000
-#define IMM8  0b001
-#define DIR16 0b010
-#define DIR8  0b011
-#define IND16 0b100
-#define IND8  0b101
-
-#define IMMEDIATE16 IMM16
-#define IMMEDIATE8 IMM8
-#define DIRECT16 DIR16
-#define DIRECT8 DIR8
-#define INDIRECT16 IND16 
-#define INDIRECT8 IND8
-
-/* opcode macros */
-
-// [UNARY/BINARY/TRINARY][F][H][OP]
-// UNARY/BINARY/TRINARY - 1, 2, or 3 operands
-// H, Half - Interpret operands as half precision floating point
-// F, Function - Use a function instead of operator on operands
-
-#define OPCODE(op) [this]() { op; };
-
-#define UNARYOP(op) unaryOp([](uint32_t a) { return op; })
-#define UNARYHOP(op) unaryOp([](uint32_t a) { return encodeHalf((op)(decodeHalf(a))); })
-
-#define BINARYOP(op) binaryOp([](uint32_t a, uint32_t b) { return a op b; })
-#define BINARYFOP(op) binaryOp([](uint32_t a, uint32_t b) { return op(a,b); })
-#define BINARYHOP(op) binaryOp([](uint32_t a, uint32_t b) { return encodeHalf(decodeHalf(a) op decodeHalf(b)); }) // kinda unoptimizatory.
-#define BINARYHFOP(op) binaryOp([](uint32_t a, uint32_t b) { return encodeHalf(op(decodeHalf(a),decodeHalf(b))); })
-
-#define TRINARYOP(op) trinaryOp([](uint32_t a, uint32_t b, uint32_t c) { return a op b op c; })
-
-#define CMPOP() cmpOp()
-#define JMPOP(op) jmpOp([](int32_t a, int32_t b) { return a op b; })
-
-#define HALT() reset()
-#define RST() reset()
-#define NOP() nop()
-#define PUSH(indirect) push(indirect)
-#define POP() pop()
-#define CALL(indirect) call(indirect)
-#define RET() ret()
-#define HALF(op) encodeHalf(op(decodeHalf(a)))
-
-/* timing functions */
-
-uint64_t PxCPU::getCycles() { return CYCLES; };
-
-int PxCPU::getRunningTime() {
-  auto now = std::chrono::high_resolution_clock::now();
-  auto time_span = std::chrono::duration_cast<std::chrono::milliseconds>(now - startupTime);
-  return time_span.count();
-}
-
-/* fetch functions */
-
-uint8_t PxCPU::fetchByte() {
-  return mainboard->readByte(PC++);
-};
-
-uint16_t PxCPU::fetchWord() {
-  // there is a lot of optimization...
-  uint16_t word = mainboard->readByte(PC++) << 8;
-  word |= mainboard->readByte(PC++);
-  return word;
-};
-
-/* resolve functions */
-
-std::pair<pxword, pxword> PxCPU::resolveOperand(pxbyte mode, pxword word) {
-  uint16_t address = 0;
-  uint16_t value = 0;
-
-  switch (mode) {
-    case IMM16:
-      value = word;
-      break;
-    case IMM8:
-      value = word & 0xFF;
-      break;
-
-    case DIR16:
-      address = word;
-      value = mainboard->readWord(address);
-      break;
-    case DIR8:
-      address = word;
-      value = mainboard->readByte(address);
-      break;
-
-    case IND16:
-      address = mainboard->readWord(word);
-      value = mainboard->readWord(address);
-      break;
-    case IND8:
-      address = mainboard->readWord(word);
-      value = mainboard->readByte(address);
-      break;
-
-    default:
-      throw std::runtime_error("Invalid operand mode");
-  }
-
-  return { address, value };
-}
-
-std::function<void()> PxCPU::decode(uint8_t opcode) {
-
-  auto it = instructionSet.find(opcode);
-  if (it != instructionSet.end()) {
-    auto instruction = it->second;
-    return instruction;
-  }
-  else {
-    throw std::runtime_error("Invalid opcode: " + std::to_string(opcode));
-  }
-}
-
 /* cpu cycle */
 
 void PxCPU::tick() {
@@ -150,7 +20,7 @@ void PxCPU::tick() {
   IR = fetchByte();
   auto instruction = decode(IR);
   instruction();
-};
+}
 
 /* cpu reset */
 
@@ -165,6 +35,68 @@ void PxCPU::reset() {
   cycleCost = 0;
 
   startupTime = std::chrono::high_resolution_clock::now();
+}
+
+/* timing functions */
+
+uint64_t PxCPU::getCycles() { return CYCLES; };
+
+int PxCPU::getRunningTime() {
+  auto now = std::chrono::high_resolution_clock::now();
+  auto time_span = std::chrono::duration_cast<std::chrono::milliseconds>(now - startupTime);
+  return time_span.count();
+}
+
+/* fetching functions */
+
+pxbyte PxCPU::fetchByte() {
+  return mainboard->readByte(PC++);
+};
+
+pxword PxCPU::fetchWord() {
+  // there is a lot of optimization...
+  pxword word = mainboard->readByte(PC++) << 8;
+  word |= mainboard->readByte(PC++);
+  return word;
+};
+
+/* operand functions */
+
+std::pair<pxword, pxword> PxCPU::resolveOperand(pxbyte mode, pxword number) {
+  pxword address = 0;
+  pxword value = 0;
+
+  switch (mode) {
+    case IMM16:
+      value = number;
+      break;
+    case IMM8:
+      value = number & 0xFF;
+      break;
+
+    case DIR16:
+      address = number;
+      value = mainboard->readWord(address);
+      break;
+    case DIR8:
+      address = number;
+      value = mainboard->readByte(address);
+      break;
+
+    case IND16:
+      address = mainboard->readWord(number);
+      value = mainboard->readWord(address);
+      break;
+    case IND8:
+      address = mainboard->readWord(number);
+      value = mainboard->readByte(address);
+      break;
+
+    default:
+      throw std::runtime_error("Invalid operand mode");
+  }
+
+  return { address, value };
 }
 
 /* stack operations */
@@ -351,6 +283,47 @@ void PxCPU::ret() {
 }
 
 /* cpu instruction set */
+
+std::function<void()> PxCPU::decode(uint8_t opcode) {
+  auto it = instructionSet.find(opcode);
+  if (it != instructionSet.end()) {
+    auto instruction = it->second;
+    return instruction;
+  }
+  else {
+    throw std::runtime_error("Invalid opcode: " + std::to_string(opcode));
+  }
+}
+
+// [UNARY/BINARY/TRINARY][F][H][OP]
+// UNARY/BINARY/TRINARY - 1, 2, or 3 operands
+// H, Half - interpret operands as half precision floating point
+// F, Function - use a function instead of operator on operands
+
+#define OPCODE(op) [this]() { op; };
+
+#define UNARYOP(op) unaryOp([](uint32_t a) { return op; })
+#define UNARYHOP(op) unaryOp([](uint32_t a) { return encodeHalf((op)(decodeHalf(a))); })
+
+#define BINARYOP(op) binaryOp([](uint32_t a, uint32_t b) { return a op b; })
+#define BINARYFOP(op) binaryOp([](uint32_t a, uint32_t b) { return op(a,b); })
+#define BINARYHOP(op) binaryOp([](uint32_t a, uint32_t b) { return encodeHalf(decodeHalf(a) op decodeHalf(b)); }) // kinda unoptimizatory.
+#define BINARYHFOP(op) binaryOp([](uint32_t a, uint32_t b) { return encodeHalf(op(decodeHalf(a),decodeHalf(b))); })
+
+#define TRINARYOP(op) trinaryOp([](uint32_t a, uint32_t b, uint32_t c) { return a op b op c; })
+
+#define CMPOP() cmpOp()
+#define JMPOP(op) jmpOp([](int32_t a, int32_t b) { return a op b; })
+
+#define HALT() reset()
+#define RST() reset()
+#define NOP() nop()
+#define PUSH(indirect) push(indirect)
+#define POP() pop()
+#define CALL(indirect) call(indirect)
+#define RET() ret()
+#define HALF(op) encodeHalf(op(decodeHalf(a)))
+
 void PxCPU::initializeInstructionSet() {
   instructionSet[0x00] = OPCODE(NOP());                                            // NOP
                                                                                  

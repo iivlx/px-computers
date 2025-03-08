@@ -9,6 +9,31 @@
 
 #include "PxMainboard.h"
 
+/* stack modes */
+
+#define S_NONE  0b000    //  .
+#define S_OUT   0b001    //  >
+#define S_IN    0b010    //  <
+#define S_CHK   0b011    //  <>
+#define S_L_OUT 0b100    //  ^
+#define S_L_CHK 0b110    //  <^
+
+/* addressing modes */
+
+#define IMM16 0b000
+#define IMM8  0b001
+#define DIR16 0b010
+#define DIR8  0b011
+#define IND16 0b100
+#define IND8  0b101
+
+#define IMMEDIATE16 IMM16
+#define IMMEDIATE8 IMM8
+#define DIRECT16 DIR16
+#define DIRECT8 DIR8
+#define INDIRECT16 IND16
+#define INDIRECT8 IND8
+
  // Big-endian...
 
 using pxbyte = uint8_t;
