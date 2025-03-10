@@ -4,6 +4,7 @@
 
 #include "Window.h"
 #include "Screen.h"
+#include "Input.h"
 
 #include "pxAssemble.h"
 #include "PxCPU.h"
@@ -29,7 +30,8 @@ int main(int argc, char* argv[]) {
 
   // Initialize display
   Window mainWindow(512, 512, "px-computers");
-  Screen screen(&mainWindow, 64, 64);
+  mainWindow.screen = new Screen(64, 64);
+  mainWindow.input = new Input(mainWindow.screen);
 
   // Create virtual computer
 
@@ -61,8 +63,8 @@ int main(int argc, char* argv[]) {
   rom->writeBytes(0x0000, code.first, code.second);
 
   // add virtual computer's display to the screen and run
-  screen.addDevice(display);
-  mainWindow.run(screen, std::vector<PxMainboard*>{mainboard});
+  mainWindow.screen->addDevice(display);
+  mainWindow.run(std::vector<PxMainboard*>{mainboard});
 
   return 0;
 }

@@ -13,8 +13,6 @@ PxDisplay::PxDisplay(int width, int height, bool doubleBuffering, float scale)
   , buffer2(doubleBuffering ? width * height*3 : 0, 0)
   , currentBuffer(&buffer1), backBuffer(doubleBuffering ? &buffer2 : nullptr)
   , redrawRequested(false), bufferSwapRequested(false)
-  , scale(scale)
-  , x_offset(0.5f), y_offset(0.5f)
 {
   if (width <= 0 || height <= 0) {
     throw std::invalid_argument("Invalid size...");

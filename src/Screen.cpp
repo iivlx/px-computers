@@ -10,19 +10,16 @@
 
 #include "Window.h"
 #include "Screen.h"
-#include "ScreenInput.h"
+#include "Input.h"
 
 #include "pxOpenGL.h"
 #include "pxOpenGLUtil.h"
 
 #include <iostream>
 
-Screen::Screen(Window* window, int width, int height)
+Screen::Screen(int width, int height)
   : width(width), height(height)
 {
-  window->screen = this;
-  input = new ScreenInput(this);
-
   initializeShaderPrograms();
   initializeShaderUniforms();
 }
@@ -36,13 +33,17 @@ void Screen::addDevice(PxDevice* pd) {
     addDisplay(display);
   }
 
+  //else if (auto* keyboard = dynamic_cast<PxKeyboard*>(pd)) {
+  //  addKeyboard(keyboard);
+  //}
+
 }
 
 void Screen::addDisplay(PxDisplay* pd) {
   initializeTexture(pd->textureID);
   initializeQuadVAO(pd->VAO);
 
-  displays.emplace_back(pd);
+  devices[pd] = std::make_pair<float, float>(0.5f, 0.5f); // should create new layout, pos, scale, etc...
 }
 
 void Screen::initializeShaderPrograms() {
@@ -113,18 +114,33 @@ void Screen::initializeQuadVAO(GLuint& quadVAO) {
   glBindVertexArray(0);
 }
 
-/* Render a display's buffer as a texture to the screen... */
-void Screen::renderDisplay(PxDisplay* display, float x_offset, float y_offset) {
 
+void Screen::render(std::vector<PxMainboard*> mainboards) {
+  for (auto devicecontext : devices) {
+    auto layout = devicecontext.second;
+    auto [x, y] = layout;
+
+    if (auto* device = dynamic_cast<PxDisplay*>(devicecontext.first)) {
+      renderDisplay(device, x, y, 0.5f);
+    }
+    if (auto* device = dynamic_cast<PxKeyboard*>(devicecontext.first)) {
+      //renderKeyboard(device);
+    }
+  }
+}
+
+
+/* Render a display's buffer as a texture to the screen... */
+void Screen::renderDisplay(PxDisplay* display, float x_offset, float y_offset, float scale) {
   // update the display's texture from its buffer data
   glBindTexture(GL_TEXTURE_2D, display->textureID);
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, display->currentBuffer->data());
 
   // update shader with display's position
   glUseProgram(renderProgram);
-  glUniform1f(xOffsetLoc, display->x_offset);
-  glUniform1f(yOffsetLoc, display->y_offset);
-  glUniform1f(scaleLoc, display->scale);
+  glUniform1f(xOffsetLoc, x_offset);
+  glUniform1f(yOffsetLoc, y_offset);
+  glUniform1f(scaleLoc, scale);
 
   // draw
   glBindVertexArray(display->VAO);
@@ -133,9 +149,4 @@ void Screen::renderDisplay(PxDisplay* display, float x_offset, float y_offset) {
 }
 
 void Screen::moveToFront(PxDevice* pd) {
-  auto it = std::find(devices.begin(), devices.end(), pd);
-  if (it != devices.end()) {
-    devices.erase(it);
-    devices.emplace_back(pd);
-  }
 }

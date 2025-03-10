@@ -8,6 +8,7 @@
 
 #include "Window.h"
 #include "Screen.h"
+#include "Input.h"
 
 #include "pxOpenGL.h" 
 #include "pxCPU.h"
@@ -135,7 +136,7 @@ LRESULT CALLBACK Window::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     auto window = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
     int x = LOWORD(lParam);
     int y = HIWORD(lParam);
-    window->screen->input->mouseClickDown(x, y);
+    window->input->mouseClickDown(x, y);
     return 0;
   }
   case WM_RBUTTONDOWN: {
@@ -146,7 +147,7 @@ LRESULT CALLBACK Window::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     auto window = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
     int x = LOWORD(lParam);
     int y = HIWORD(lParam);
-    window->screen->input->mouseClickUp(x, y);
+    window->input->mouseClickUp(x, y);
     return 0;
   }
   case WM_MOUSEMOVE: {
@@ -154,14 +155,14 @@ LRESULT CALLBACK Window::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     int x = LOWORD(lParam);
     int y = HIWORD(lParam);
 
-    if (window->screen->input->mouseOverPxDevice(x, y)) {
+    if (window->input->mouseOverPxDevice(x, y)) {
       SetCursor(LoadCursor(nullptr, IDC_HAND));
     }
     else {
       SetCursor(LoadCursor(nullptr, IDC_ARROW));
     }
 
-    window->screen->input->mouseMove(x, y);
+    window->input->mouseMove(x, y);
 
     return 0;
   }
@@ -170,7 +171,7 @@ LRESULT CALLBACK Window::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     int keycode = static_cast<int>(wParam);
     bool repeat = (lParam & 0x40000000) != 0;
 
-    window->screen->input->keyDown(keycode, repeat);
+    window->input->keyDown(keycode, repeat);
 
     return 0;
   }
@@ -189,21 +190,12 @@ void Window::tick(std::vector<PxMainboard*> mainboards) {
   }
 }
 
-void Window::redraw(Screen& screen, std::vector<PxMainboard*> mainboards) {
-  static float x = 0.0f;
-  static float y = 0.0f;
-  x += 0.0001f;
-  y += 0.0001f;
-
+void Window::redraw(std::vector<PxMainboard*> mainboards) {
   glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
-  for (const auto mainboard : mainboards) {
-    //if (mainboard->main_display->redrawRequested) {
-      //mainboard->main_display->redrawRequested = false;
-      screen.renderDisplay(mainboard->main_display, x, y);
-    //}
-  } 
+  screen->render(mainboards);
+
   SwapBuffers(hDC);
 }
 
@@ -219,7 +211,9 @@ void Window::PxCPUThread(PxMainboard* mainboard) {
   std::cout << "Cycles executed: " << cycles << " in " << runningTime << std::endl;
 }
 
-void Window::run(Screen& screen, std::vector<PxMainboard*> mainboards) {
+/* executes mainboards and renders them on a screen */
+void Window::run(std::vector<PxMainboard*> mainboards) {
+  // startup
   bool multi = true;
   std::vector<std::thread> executionThreads;
   running = true;
@@ -231,21 +225,23 @@ void Window::run(Screen& screen, std::vector<PxMainboard*> mainboards) {
     }
   }
 
+  // main loop
   MSG msg = {};
   while (msg.message != WM_QUIT) {
-
+    // handle win32 messages
     if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
       TranslateMessage(&msg);
       DispatchMessage(&msg);
     }
-
+    // handle px devices and render
     else {
-      if (!multi) tick(mainboards);
-      redraw(screen, mainboards); // this is uhhh.. somewhat questionable.
+      if (!multi) tick(mainboards); // so is this lol... in fact.. it all is...
+      redraw(mainboards); // this is uhhh.. somewhat questionable.
     }
 
   }
 
+  // shutdown
   running = false;
   if (multi) {
     for (auto& thread : executionThreads) {

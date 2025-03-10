@@ -44,10 +44,6 @@ public:
   GLuint textureID;
   GLuint VAO;
 
-  float x_offset;
-  float y_offset;
-  float scale;
-
 private:
   void handleControlRegisterWrite(uint16_t address, uint8_t value);
   std::unordered_map<uint16_t, std::function<uint8_t()>> controlReadHandlers; // callback for operations on read addresses...

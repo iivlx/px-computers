@@ -3,36 +3,33 @@
 #include <string>
 #include <unordered_map>
 
-#include "ScreenInput.h"
+#include "Window.h"
 
 #include "PxDisplay.h"
 #include "PxKeyboard.h"
+#include "PxMainboard.h"
 
 class Window;
-class ScreenInput;
 
+/* opengl "screen" or rendering surface */
+// - renders pxdevices
 class Screen {
 public:
-  Screen(Window* window, int width, int height);
+  Screen(int width, int height);
   ~Screen();
 
-  void render(); // render all devices
-  void renderDisplay(PxDisplay* display, float x_offset = 1.0f, float y_offset = 1.0f);
+  void render(std::vector<PxMainboard*> mainboards);
+  void renderDisplay(PxDisplay* display, float x_offset = 1.0f, float y_offset = 1.0f, float scale = 1.0f);
   void renderKeyboard(PxKeyboard* keyboard);
 
   void addDevice(PxDevice* device);
   void addDisplay(PxDisplay* display);
-  void addKeyboard(PxKeyboard* keyboard);
   void moveToFront(PxDevice* device);
-
-  ScreenInput* input;
 
   GLuint renderProgram;
   GLuint computeProgram;
 
-  std::vector<PxDevice*> devices;
-  std::vector<PxDisplay*> displays;
-  //std::unordered_map<PxDisplay*, std::pair<GLuint, GLuint>> displays; // textures, vaos
+  std::unordered_map<PxDevice*, std::pair<float, float>> devices; // we just keep pair of ints as layout for now...
 
 private:
   int width, height;

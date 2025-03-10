@@ -5,12 +5,13 @@
 #include "PxDevice.h"
 #include "PxDisplay.h"
 
+class Window;
 class Screen;
 
-class ScreenInput {
+class Input {
 public:
-  ScreenInput(Screen* screen);
-  ~ScreenInput();
+  Input(Screen* screen);
+  ~Input();
 
   void mouseClickDown(float x, float y);
   void mouseClickUp(float x, float y);
