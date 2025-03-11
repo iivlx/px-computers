@@ -155,7 +155,7 @@ LRESULT CALLBACK Window::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     int x = LOWORD(lParam);
     int y = HIWORD(lParam);
 
-    if (window->input->mouseOverPxDevice(x, y)) {
+    if (window->input->mouseOver(x, y)) {
       SetCursor(LoadCursor(nullptr, IDC_HAND));
     }
     else {

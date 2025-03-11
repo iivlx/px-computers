@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 
   // Initialize display
   Window mainWindow(512, 512, "px-computers");
-  mainWindow.screen = new Screen(64, 64);
+  mainWindow.screen = new Screen(512, 512);
   mainWindow.input = new Input(mainWindow.screen);
 
   // Create virtual computer

@@ -40,7 +40,7 @@ void Screen::addDevice(PxDevice* pd) {
 }
 
 void Screen::addDisplay(PxDisplay* pd) {
-  initializeTexture(pd->textureID);
+  initializeTexture(pd->textureID, pd->getSize());
   initializeQuadVAO(pd->VAO);
 
   std::pair<PxDisplay*, Layout*> device_context = { pd, new Layout(0.0f, 0.0f, 0.5f) };
@@ -67,7 +67,7 @@ void Screen::initializeShaderUniforms() {
   scaleLoc = glGetUniformLocation(renderProgram, "scale");
 }
 
-void Screen::initializeTexture(GLuint& textureID) {
+void Screen::initializeTexture(GLuint& textureID, std::pair<int, int> size) {
   glGenTextures(1, &textureID);
   glBindTexture(GL_TEXTURE_2D, textureID);
 
@@ -76,7 +76,7 @@ void Screen::initializeTexture(GLuint& textureID) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size.first, size.second, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 }
 
 void Screen::initializeQuadVAO(GLuint& quadVAO) {
@@ -134,12 +134,12 @@ void Screen::render(std::vector<PxMainboard*> mainboards) {
 void Screen::renderDisplay(PxDisplay* display, Layout* layout) {
   // update the display's texture from its buffer data
   glBindTexture(GL_TEXTURE_2D, display->textureID);
-  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, display->currentBuffer->data());
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, display->getWidth(), display->getHeight(), GL_RGB, GL_UNSIGNED_BYTE, display->currentBuffer->data());
 
   // update shader with display's position
   glUseProgram(renderProgram);
-  glUniform1f(xOffsetLoc, layout->x);
-  glUniform1f(yOffsetLoc, layout->y);
+  glUniform1f(xOffsetLoc, layout->x / layout->scale);
+  glUniform1f(yOffsetLoc, layout->y / layout->scale);
   glUniform1f(scaleLoc, layout->scale);
 
   // draw
@@ -148,5 +148,23 @@ void Screen::renderDisplay(PxDisplay* display, Layout* layout) {
   glBindVertexArray(0);
 }
 
-void Screen::moveToFront(PxDevice* pd) {
+bool Screen::isMouseInLayout(std::pair<float, float> mouse, Layout* layout) {
+  if ( mouse.first >= layout->x - layout->scale
+    && mouse.first <= layout->x + layout->scale
+    && mouse.second >= layout->y - layout->scale
+    && mouse.second <= layout->y + layout->scale)
+  {
+    return true;
+  }
+  return false;
+}
+
+void Screen::moveToFront(std::pair<PxDevice*, Layout*> device_context) {
+  auto [device, layout] = device_context;
+}
+
+std::pair<float, float> Screen::normalizeMouseCoords(float x, float y) {
+  float ndcX = (x / width) * 2.0f - 1.0f;
+  float ndcY = (1.0f - (y / height)) * 2.0f - 1.0f;
+  return { ndcX, ndcY };
 }

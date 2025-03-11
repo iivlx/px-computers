@@ -37,6 +37,8 @@ public:
   void clearBuffer(int r, int g, int b);
 
   std::pair<int, int> getSize() { return { width, height }; };
+  int getWidth() { return width; };
+  int getHeight() { return height; };
   
   bool bufferSwapRequested;
   bool redrawRequested;

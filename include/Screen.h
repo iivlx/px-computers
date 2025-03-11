@@ -25,7 +25,10 @@ public:
 
   void addDevice(PxDevice* device);
   void addDisplay(PxDisplay* display);
-  void moveToFront(PxDevice* device);
+
+  bool isMouseInLayout(std::pair<float, float> mouse, Layout* layout);
+  void moveToFront(std::pair<PxDevice*, Layout*> device_context);
+  std::pair<float, float> normalizeMouseCoords(float x, float y);
 
   GLuint renderProgram;
   GLuint computeProgram;
@@ -39,7 +42,7 @@ private:
   void initializeShaderPrograms();
   void initializeShaderUniforms();
   void initializeQuadVAO(GLuint& VAO);
-  void initializeTexture(GLuint& textureID);
+  void initializeTexture(GLuint& textureID, std::pair<int, int>);
 
   // shader uniforms
   GLint xOffsetLoc;

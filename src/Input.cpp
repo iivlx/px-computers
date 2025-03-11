@@ -13,8 +13,9 @@
 
 
 Input::Input(Screen* screen)
-  : clicked(nullptr), drag_x(0.0f), drag_y(0.0f)
+  : drag_x(0.0f), drag_y(0.0f)
   , screen(screen)
+  , clicked(nullptr)
 {
 }
 
@@ -27,8 +28,22 @@ void Input::mouseClickDown(float x, float y) {
 
   std::cout << "Coords: " << ndcX << ", " << ndcY << std::endl;
 
-  for (auto device : screen->devices) {
+  for (auto &device_context : screen->devices) {
+    auto [device, layout] = device_context;
 
+    std::pair<float, float> mouse = { ndcX, ndcY };
+
+    if (screen->isMouseInLayout(mouse, layout)) {
+
+      screen->moveToFront(device_context);
+      clicked = &device_context;
+
+      if (!dragging) {
+        dragging = true;
+        drag_x = ndcX;
+        drag_y = ndcY;
+      }
+    }
   }
 }
 
@@ -42,56 +57,34 @@ void Input::mouseClickUp(float x, float y) {
 }
 
 void Input::mouseMove(float x, float y) {
+  auto [ndcX, ndcY] = screen->normalizeMouseCoords(x, y);
 
-  return;
+  if (dragging && clicked) {
+    auto [device, layout] = *clicked;
 
-  float ndcX = (x / 512.0f) * 2 - 1.0f; // normal coords
-  float ndcY = (1.0f - (y / 512.0f)) * 2 - 1.0f;
+    float dx = (drag_x - ndcX) / layout->scale;
+    float dy = (drag_y - ndcY) / layout->scale;
 
-  if (dragging) {
+    drag_x = ndcX;
+    drag_y = ndcY;
 
+    layout->x -= dx * layout->scale; // opposite direction of mouse drag
+    layout->y -= dy * layout->scale;
   }
 }
 
-void Input::mouseClickDownPxDisplay(PxDisplay* display, float x, float y) {
-  clicked = static_cast<PxDevice*>(display);
-
-  screen->moveToFront(display);
-
-  if (!dragging) {
-    dragging = true;
-    drag_x = x;
-    drag_y = y;
-  }
-  else {
-    //dragging = false; // toggle
-  }
-}
-
-bool Input::mouseOverPxDevice(float x, float y) {
+bool Input::mouseOver(float x, float y) {
   float ndcX = (x / 512.0f) * 2 - 1.0f; // some spongy looking code
   float ndcY = (1.0f - (y / 512.0f)) * 2 - 1.0f;
 
-  for (auto devicecontext : screen->devices) {
+  for (auto device_context : screen->devices) {
+    auto [device, layout] = device_context;
 
-    auto device = devicecontext.first;
-    auto layout = devicecontext.second;
-
-    float scale = layout->scale;
-    float xOffset = layout->x * scale;
-    float yOffset = layout->y * scale;
-
-    int width = 64;
-    int height = 64;
-    //auto [width, height] = display->getSize();
-
-    if ( ndcX >= xOffset - scale
-      && ndcX <= xOffset + scale
-      && ndcY >= yOffset - scale
-      && ndcY <= yOffset + scale) {
+    if (screen->isMouseInLayout({ ndcX, ndcY }, layout)) {
       return true;
     }
   }
+
   return false;
 }
 
