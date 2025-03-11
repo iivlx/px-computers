@@ -43,7 +43,8 @@ void Screen::addDisplay(PxDisplay* pd) {
   initializeTexture(pd->textureID);
   initializeQuadVAO(pd->VAO);
 
-  devices[pd] = std::make_pair<float, float>(0.5f, 0.5f); // should create new layout, pos, scale, etc...
+  std::pair<PxDisplay*, Layout*> device_context = { pd, new Layout(0.0f, 0.0f, 0.5f) };
+  devices.emplace_back(device_context);
 }
 
 void Screen::initializeShaderPrograms() {
@@ -116,31 +117,30 @@ void Screen::initializeQuadVAO(GLuint& quadVAO) {
 
 
 void Screen::render(std::vector<PxMainboard*> mainboards) {
-  for (auto devicecontext : devices) {
-    auto layout = devicecontext.second;
-    auto [x, y] = layout;
+  for (auto device_context : devices) {
+    auto layout = device_context.second;
 
-    if (auto* device = dynamic_cast<PxDisplay*>(devicecontext.first)) {
-      renderDisplay(device, x, y, 0.5f);
+    if (auto* device = dynamic_cast<PxDisplay*>(device_context.first)) {
+      renderDisplay(device, layout);
     }
-    if (auto* device = dynamic_cast<PxKeyboard*>(devicecontext.first)) {
-      //renderKeyboard(device);
+    if (auto* device = dynamic_cast<PxKeyboard*>(device_context.first)) {
+      //renderKeyboard(device, layout->x, layout->y, layout->scale);
     }
   }
 }
 
 
 /* Render a display's buffer as a texture to the screen... */
-void Screen::renderDisplay(PxDisplay* display, float x_offset, float y_offset, float scale) {
+void Screen::renderDisplay(PxDisplay* display, Layout* layout) {
   // update the display's texture from its buffer data
   glBindTexture(GL_TEXTURE_2D, display->textureID);
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, display->currentBuffer->data());
 
   // update shader with display's position
   glUseProgram(renderProgram);
-  glUniform1f(xOffsetLoc, x_offset);
-  glUniform1f(yOffsetLoc, y_offset);
-  glUniform1f(scaleLoc, scale);
+  glUniform1f(xOffsetLoc, layout->x);
+  glUniform1f(yOffsetLoc, layout->y);
+  glUniform1f(scaleLoc, layout->scale);
 
   // draw
   glBindVertexArray(display->VAO);

@@ -77,9 +77,9 @@ bool Input::mouseOverPxDevice(float x, float y) {
     auto device = devicecontext.first;
     auto layout = devicecontext.second;
 
-    float scale = 1.0f;
-    float xOffset = layout.first * scale;
-    float yOffset = layout.second * scale;
+    float scale = layout->scale;
+    float xOffset = layout->x * scale;
+    float yOffset = layout->y * scale;
 
     int width = 64;
     int height = 64;
