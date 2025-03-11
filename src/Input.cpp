@@ -29,12 +29,14 @@ void Input::mouseClickDown(float x, float y) {
     if (isMouseInLayout(mouse, device_context.second)) {
 
       screen->moveToFront(device_context);
-      clicked = &device_context;
+      clicked = &screen->devices.at(0);
 
       if (!dragging) {
         dragging = true;
         drag = mouse;
       }
+
+      break; // don't click through
     }
   }
 }

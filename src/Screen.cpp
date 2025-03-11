@@ -116,7 +116,9 @@ void Screen::initializeQuadVAO(GLuint& quadVAO) {
 }
 
 void Screen::render(std::vector<PxMainboard*> mainboards) {
-  for (auto device_context : devices) {
+  // render back to front
+  for (auto it = devices.rbegin(); it != devices.rend(); ++it) {
+    auto& device_context = *it;
     auto layout = device_context.second;
 
     if (auto* device = dynamic_cast<PxDisplay*>(device_context.first)) {
@@ -147,7 +149,11 @@ void Screen::renderDisplay(PxDisplay* display, Layout* layout) {
 }
 
 void Screen::moveToFront(std::pair<PxDevice*, Layout*> device_context) {
-  auto [device, layout] = device_context;
+  auto found_context = std::find(devices.begin(), devices.end(), device_context);
+  if (found_context != devices.end()) {
+    devices.erase(found_context);
+    devices.insert(devices.begin(), device_context);
+  }
 }
 
 std::pair<float, float> Screen::normalizeMouseCoords(float x, float y) {
