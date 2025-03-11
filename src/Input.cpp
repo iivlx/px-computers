@@ -13,9 +13,9 @@
 
 
 Input::Input(Screen* screen)
-  : drag_x(0.0f), drag_y(0.0f)
-  , screen(screen)
+  : screen(screen)
   , clicked(nullptr)
+  , drag_x(0.0f), drag_y(0.0f)
 {
 }
 
@@ -23,8 +23,7 @@ Input::~Input() {
 }
 
 void Input::mouseClickDown(float x, float y) {
-  float ndcX = (x / 512.0f) * 2 - 1.0f; // some spongy looking code
-  float ndcY = (1.0f - (y / 512.0f)) * 2 - 1.0f;
+  auto [ndcX, ndcY] = screen->normalizeMouseCoords(x, y);
 
   std::cout << "Coords: " << ndcX << ", " << ndcY << std::endl;
 
@@ -48,8 +47,7 @@ void Input::mouseClickDown(float x, float y) {
 }
 
 void Input::mouseClickUp(float x, float y) {
-  float ndcX = (x / 512.0f) * 2 - 1.0f;
-  float ndcY = (1.0f - (y / 512.0f)) * 2 - 1.0f;
+  //auto [ndcX, ndcY] = screen->normalizeMouseCoords(x, y);
 
   if (dragging) {
     dragging = false;
@@ -74,8 +72,7 @@ void Input::mouseMove(float x, float y) {
 }
 
 bool Input::mouseOver(float x, float y) {
-  float ndcX = (x / 512.0f) * 2 - 1.0f; // some spongy looking code
-  float ndcY = (1.0f - (y / 512.0f)) * 2 - 1.0f;
+  auto [ndcX, ndcY] = screen->normalizeMouseCoords(x, y);
 
   for (auto device_context : screen->devices) {
     auto [device, layout] = device_context;
@@ -94,6 +91,5 @@ void Input::keyDown(int character, bool repeat) {
   // Check if `clicked` is a pxKeyboard ?
 
   // Send correct bytes to pxKeyboard ?
-
 
 }

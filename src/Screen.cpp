@@ -115,7 +115,6 @@ void Screen::initializeQuadVAO(GLuint& quadVAO) {
   glBindVertexArray(0);
 }
 
-
 void Screen::render(std::vector<PxMainboard*> mainboards) {
   for (auto device_context : devices) {
     auto layout = device_context.second;
@@ -128,7 +127,6 @@ void Screen::render(std::vector<PxMainboard*> mainboards) {
     }
   }
 }
-
 
 /* Render a display's buffer as a texture to the screen... */
 void Screen::renderDisplay(PxDisplay* display, Layout* layout) {
