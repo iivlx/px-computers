@@ -25,7 +25,7 @@ enum PXDISPLAY {
 
 class PxDisplay : public PxDevice {
 public:
-  PxDisplay(int width, int height, bool doubleBuffering = false, float scale = 1.0f);
+  PxDisplay(int width, int height, bool doubleBuffering = false);
   ~PxDisplay();
 
   uint8_t readByte(uint16_t address) const;

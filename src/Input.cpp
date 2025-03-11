@@ -15,7 +15,7 @@
 Input::Input(Screen* screen)
   : screen(screen)
   , clicked(nullptr)
-  , drag_x(0.0f), drag_y(0.0f)
+  , drag(std::make_pair<float,float>(0.0f, 0.0f))
 {
 }
 
@@ -23,24 +23,17 @@ Input::~Input() {
 }
 
 void Input::mouseClickDown(float x, float y) {
-  auto [ndcX, ndcY] = screen->normalizeMouseCoords(x, y);
-
-  std::cout << "Coords: " << ndcX << ", " << ndcY << std::endl;
+  auto mouse = screen->normalizeMouseCoords(x, y);
 
   for (auto &device_context : screen->devices) {
-    auto [device, layout] = device_context;
-
-    std::pair<float, float> mouse = { ndcX, ndcY };
-
-    if (screen->isMouseInLayout(mouse, layout)) {
+    if (isMouseInLayout(mouse, device_context.second)) {
 
       screen->moveToFront(device_context);
       clicked = &device_context;
 
       if (!dragging) {
         dragging = true;
-        drag_x = ndcX;
-        drag_y = ndcY;
+        drag = mouse;
       }
     }
   }
@@ -55,29 +48,25 @@ void Input::mouseClickUp(float x, float y) {
 }
 
 void Input::mouseMove(float x, float y) {
-  auto [ndcX, ndcY] = screen->normalizeMouseCoords(x, y);
+  auto mouse = screen->normalizeMouseCoords(x, y);
 
   if (dragging && clicked) {
-    auto [device, layout] = *clicked;
+    auto layout = (*clicked).second;
 
-    float dx = (drag_x - ndcX) / layout->scale;
-    float dy = (drag_y - ndcY) / layout->scale;
+    float dx = (drag.first - mouse.first);
+    float dy = (drag.second - mouse.second);
+    layout->x -= dx; // opposite direction of mouse drag
+    layout->y -= dy;
 
-    drag_x = ndcX;
-    drag_y = ndcY;
-
-    layout->x -= dx * layout->scale; // opposite direction of mouse drag
-    layout->y -= dy * layout->scale;
+    drag = mouse;
   }
 }
 
 bool Input::mouseOver(float x, float y) {
-  auto [ndcX, ndcY] = screen->normalizeMouseCoords(x, y);
+  auto mouse = screen->normalizeMouseCoords(x, y);
 
   for (auto device_context : screen->devices) {
-    auto [device, layout] = device_context;
-
-    if (screen->isMouseInLayout({ ndcX, ndcY }, layout)) {
+    if (isMouseInLayout(mouse, device_context.second)) {
       return true;
     }
   }
@@ -92,4 +81,15 @@ void Input::keyDown(int character, bool repeat) {
 
   // Send correct bytes to pxKeyboard ?
 
+}
+
+bool Input::isMouseInLayout(std::pair<float, float> mouse, Layout* layout) {
+  if (mouse.first >= layout->x - layout->scale
+    && mouse.first <= layout->x + layout->scale
+    && mouse.second >= layout->y - layout->scale
+    && mouse.second <= layout->y + layout->scale)
+  {
+    return true;
+  }
+  return false;
 }

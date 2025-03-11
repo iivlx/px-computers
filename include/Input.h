@@ -20,12 +20,13 @@ public:
 
   void keyDown(int keycode, bool repeat);
 
+  bool isMouseInLayout(std::pair<float, float> mouse, Layout* layout);
+
   Screen* screen;
 
 private:
   std::pair<PxDevice*, Layout*>* clicked;
   bool dragging = false;
-  float drag_x;
-  float drag_y;
+  std::pair<float, float> drag;
 
 };

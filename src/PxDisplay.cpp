@@ -7,7 +7,7 @@
 #include "PxDisplay.h"
 
 
-PxDisplay::PxDisplay(int width, int height, bool doubleBuffering, float scale)
+PxDisplay::PxDisplay(int width, int height, bool doubleBuffering)
   : width(width), height(height), doubleBuffering(doubleBuffering)
   , buffer1(width* height*3, 0)
   , buffer2(doubleBuffering ? width * height*3 : 0, 0)

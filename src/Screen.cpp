@@ -146,17 +146,6 @@ void Screen::renderDisplay(PxDisplay* display, Layout* layout) {
   glBindVertexArray(0);
 }
 
-bool Screen::isMouseInLayout(std::pair<float, float> mouse, Layout* layout) {
-  if ( mouse.first >= layout->x - layout->scale
-    && mouse.first <= layout->x + layout->scale
-    && mouse.second >= layout->y - layout->scale
-    && mouse.second <= layout->y + layout->scale)
-  {
-    return true;
-  }
-  return false;
-}
-
 void Screen::moveToFront(std::pair<PxDevice*, Layout*> device_context) {
   auto [device, layout] = device_context;
 }

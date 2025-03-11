@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
   PxRAM* ram2 = new PxRAM(0x1E00); // 7,680 bytes secondary RAM
   PxROM* rom = new PxROM(0x200); // 256 bytes ROM
   PxKeyboard* keyboard = new PxKeyboard(0x64); // 100 byte buffer
-  PxDisplay* display = new PxDisplay(64, 64, true, 0.5f); // 64x64 display - 24,832 bytes
+  PxDisplay* display = new PxDisplay(64, 64, true); // 64x64 display - 24,832 bytes
 
   // add devices to mainboard
   mainboard->addCPU(cpu);
